@@ -13,7 +13,7 @@ import com.jogamp.opengl.glu.GLU;
 import com.jogamp.opengl.util.FPSAnimator;
 import com.jogamp.common.nio.Buffers;
 
-public class TextbookCh2Practice extends JFrame implements GLEventListener { 
+public class RotationPractice extends JFrame implements GLEventListener { 
 	private TextbookMethods tm;
 	private GLCanvas myCanvas;
 	private int rendering_program;
@@ -25,9 +25,10 @@ public class TextbookCh2Practice extends JFrame implements GLEventListener {
 	private float locationY = rnd.nextFloat()/2;
 	private float incX = 0.01f + rnd.nextFloat() / 100;		// Offset for moving the triangle
 	private float incY = 0.01f + rnd.nextFloat() / 100; 	
+	private float rot = 0;
 	private float colors[] = {0.0f, 0.0f, 0.1f};
 	
-	public TextbookCh2Practice() { 
+	public RotationPractice() { 
 		setTitle("Chapter2 - Practice");
 		setSize(600, 600);
 		setLocation(300, 300);
@@ -42,7 +43,7 @@ public class TextbookCh2Practice extends JFrame implements GLEventListener {
 	}
 	
 	public static void main(String[ ] args) { 
-		new TextbookCh2Practice();
+		new RotationPractice();
 	}
 	
 	public void display(GLAutoDrawable drawable) { 
@@ -84,11 +85,15 @@ public class TextbookCh2Practice extends JFrame implements GLEventListener {
 			}
 		}
 		
+		rot += 0.01f;
+		
 		// Update variable "offset" in shader programs
 		int offsetX_ptr = gl.glGetUniformLocation(rendering_program, "offsetX");
 		int offsetY_ptr = gl.glGetUniformLocation(rendering_program, "offsetY");
+		int rot_ptr = gl.glGetUniformLocation(rendering_program, "rot");
 		gl.glProgramUniform1f(rendering_program, offsetX_ptr, locationX);
 		gl.glProgramUniform1f(rendering_program, offsetY_ptr, locationY);
+		gl.glProgramUniform1f(rendering_program, rot_ptr, rot);
 		
 		// Don't need to load in points, because we already did that in shaders, just tell OpenGL
 		// To start drawing, and that there will be 3 points that it needs to display as a triangle
@@ -110,7 +115,7 @@ public class TextbookCh2Practice extends JFrame implements GLEventListener {
 		GL4 gl = (GL4) GLContext.getCurrentGL();
 		
 		// Purpose of vertex shader is to send a vertex down the pipeline, the gl_Position variable
-		String vshaderSource[ ] = tm.readShaderSource("Shaders\\Ch2V.shader");
+		String vshaderSource[ ] = tm.readShaderSource("Shaders\\Ch3V.shader");
 		
 		// Fragment shader sets individual pixels' colors.
 		String fshaderSource[ ] = tm.readShaderSource("Shaders\\Ch2F.shader");
