@@ -14,7 +14,6 @@ import com.jogamp.opengl.util.FPSAnimator;
 import com.jogamp.common.nio.Buffers;
 
 public class TextbookCh2Practice extends JFrame implements GLEventListener { 
-	private TextbookMethods tm;
 	private GLCanvas myCanvas;
 	private int rendering_program;
 	private int vao[ ] = new int[1];
@@ -25,7 +24,6 @@ public class TextbookCh2Practice extends JFrame implements GLEventListener {
 	private float locationY = rnd.nextFloat()/2;
 	private float incX = 0.01f + rnd.nextFloat() / 100;		// Offset for moving the triangle
 	private float incY = 0.01f + rnd.nextFloat() / 100; 	
-	private float colors[] = {0.0f, 0.0f, 0.1f};
 	
 	public TextbookCh2Practice() { 
 		setTitle("Chapter2 - Practice");
@@ -110,10 +108,10 @@ public class TextbookCh2Practice extends JFrame implements GLEventListener {
 		GL4 gl = (GL4) GLContext.getCurrentGL();
 		
 		// Purpose of vertex shader is to send a vertex down the pipeline, the gl_Position variable
-		String vshaderSource[ ] = tm.readShaderSource("Shaders\\Ch2V.shader");
+		String vshaderSource[ ] = TextbookMethods.readShaderSource("Shaders\\Ch2V.shader");
 		
 		// Fragment shader sets individual pixels' colors.
-		String fshaderSource[ ] = tm.readShaderSource("Shaders\\Ch2F.shader");
+		String fshaderSource[ ] = TextbookMethods.readShaderSource("Shaders\\Ch2F.shader");
 		
 		// Creates the shader. But there's nothing in it yet. This just returns the pointer
 		// To where it will eventually be. Not unlike malloc
