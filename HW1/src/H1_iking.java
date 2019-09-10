@@ -20,14 +20,21 @@ public class H1_iking extends JOGL1_3_VertexArray {
 	private float theta = 0f;
 	
 	// Tweak these for nicer renderings
-	private static int 		NUM_PARTICLES = 100;
+	private static int 		NUM_PARTICLES = 5000;
 	private static float 	MAX_VELOCITY = 0.01f;
 	private static float 	ROT_SPEED = 0.01f;
+	private static float 	DUST_SIZE = 2f;
+	private static float 	MOVER_SIZE = 20f;
 	
 	public static void main(String[] args) {
 		 new H1_iking();
 	}
 	
+	/*
+	 * Generates random 4d vectors to be used as colors for points
+	 * Makes colors associated with background have alpha of 0 so we can more
+	 * easilly identify them
+	 */
 	private float[] genRandomColors() {
 		float retList[] = new float[NUM_PARTICLES*4 + 16];
 		
@@ -40,10 +47,8 @@ public class H1_iking extends JOGL1_3_VertexArray {
 				continue;
 			}
 			
-			// Min 0.5 so nothing is invisible
-			retList[i] = rnd.nextFloat() * 0.5f + 0.5f;
-			// Make them negative 50% of the time
-			retList[i] = (rnd.nextInt(2) % 2 == 0) ? retList[i] * -1 : retList[i];
+			// Min 0.2 so nothing is invisible
+			retList[i] = rnd.nextFloat() * 0.8f + 0.2f;
 		}
 		
 		// Shader checks if alpha is 0 in color buffer then checks if on circle circumference
@@ -60,6 +65,11 @@ public class H1_iking extends JOGL1_3_VertexArray {
 		return retList;
 	}
 	
+	/*
+	 * Generates random points inside the unit circle 
+	 * (Did this a little lazilly, they just cant have x or y > root2/2 so they're inside a square
+	 * area we know for sure fits in the circle)
+	 */
 	private float[] genRandomPoints() {
 		float retList[] = new float[NUM_PARTICLES*2 + 16];
 		
@@ -73,6 +83,7 @@ public class H1_iking extends JOGL1_3_VertexArray {
 		}
 		
 		// Spinning point
+		// Has special coordinates so GLSL knows which one it is
 		retList[0] = 0.0f;
 		retList[1] = 1.0f;
 		
@@ -88,6 +99,10 @@ public class H1_iking extends JOGL1_3_VertexArray {
 		return retList;
 	}
 	
+	/*
+	 * Generates random 2d vectors which we use for particles' velocities 
+	 *
+	 */
 	private float[] genRandom2d() {
 		float retList[] = new float[NUM_PARTICLES*2];
 		
@@ -104,18 +119,30 @@ public class H1_iking extends JOGL1_3_VertexArray {
 	
 	// Transform a vector [vx, vy] into a reflection about [x,y] (presumed to be a unit vector)
 	private float[] reflect(float x, float y, float vx, float vy) {
-		float scalerV = (float)Math.sqrt(vx*vx + vy*vy) * 2;
-		float scalerC = (float)Math.sqrt(x*x + y*y);
+		// Proj_b(a) (projection of b onto a) =
+		// a * b  
+		// ----- * a
+		// |a|^2
 		
-		// Luckily, if it hits the edge of the circle
-		float[] projection = { scalerV * (x/scalerC), scalerV * (y/scalerC)};
+		float abs_a = (float)Math.sqrt(x*x + y*y);
+		float dot_ab = x*vx + y*vy;
+		float quot = dot_ab / (abs_a * abs_a);
 		
-		// then subtract original from projection
-		projection[0] -= vx; projection[1] -= vy;
+		float proj[] = { x*quot, y*quot };
 		
-		// finally negate x and y then return
-		projection[0] *= -1; projection[1] *= -1; 
-		return projection;
+		// We now double the projection
+		proj[0] *= 2;
+		proj[1] *= 2;
+		
+		// Subtract the original from it
+		proj[0] -= vx;
+		proj[1] -= vy;
+		
+		// And return the negated vector
+		proj[0] *= -1;
+		proj[1] *= -1;
+		
+		return proj;
 	}
 	
 	public void display(GLAutoDrawable drawable) {
@@ -130,90 +157,84 @@ public class H1_iking extends JOGL1_3_VertexArray {
 		// which I think is illegal
 		for (int i=1; i<NUM_PARTICLES; i++) {
 			float x,y;
-			x = vPoints[i*2]; 
-			y = vPoints[i*2 + 1]; 
+			x = vPoints[i*2] += velocities[i*2];
+			y = vPoints[i*2 + 1] += velocities[i*2 + 1];
 			
 			if (Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)) >= 1) {
 				float[] newV = reflect(x, y, velocities[i*2], velocities[i*2 + 1]);
 				velocities[i*2] = newV[0];
 				velocities[i*2 + 1] = newV[1];
 			}
-			
-			vPoints[i*2] += velocities[i*2];
-			vPoints[i*2 + 1] += velocities[i*2 + 1];
 		}
 		
-		// load vbo[0] with vertex data
+		// Update location of dust pixels
 		gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[POSITION]); // use handle 0 		
-		
 		FloatBuffer vBuf = Buffers.newDirectFloatBuffer(vPoints);
 		gl.glBufferData(GL_ARRAY_BUFFER, vBuf.limit()*Float.BYTES, vBuf, GL_STATIC_DRAW); 
 		gl.glVertexAttribPointer(0, 2, GL_FLOAT, false, 0, 0); // associate vbo[0] with active VAO buffer
 		
-		// load vbo[1] with color data
-		gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[1]); // use handle 1 		
-		FloatBuffer cBuf = Buffers.newDirectFloatBuffer(vColors);
-		gl.glBufferData(GL_ARRAY_BUFFER, cBuf.limit()*Float.BYTES, cBuf, GL_STATIC_DRAW); 		
-		gl.glVertexAttribPointer(1, 4, GL_FLOAT, false, 0, 0); // associate vbo[1] with active vao buffer
-		
-		int wPointer = gl.glGetUniformLocation(vfPrograms, "width");
-		int hPointer = gl.glGetUniformLocation(vfPrograms, "height");
-		int tPointer = gl.glGetUniformLocation(vfPrograms, "theta");
-		
+		// Update location of circling pixel
 		theta += ROT_SPEED;
-		// I have no clue why these need to be adjusted like this. I assume it has something to do with
-		// The toolbar at the top?
-		gl.glProgramUniform1f(vfPrograms, wPointer, this.WIDTH-15);
-		gl.glProgramUniform1f(vfPrograms, hPointer, this.HEIGHT-40);
+		int tPointer = gl.glGetUniformLocation(vfPrograms, "theta");
 		gl.glProgramUniform1f(vfPrograms, tPointer, theta);
 		
-		gl.glDrawArrays(GL_QUADS, NUM_PARTICLES, 4);
-		
-		gl.glPointSize(6.0f);
-		gl.glDrawArrays(GL_POINTS, 0, NUM_PARTICLES);
+		gl.glDrawArrays(GL_QUADS, NUM_PARTICLES, 4); 	// Draw the circle around the dust
+		gl.glDrawArrays(GL_POINTS, 0, NUM_PARTICLES); 	// Draw the dust and circling pixel
 	}
 	
 	public void init(GLAutoDrawable drawable) {
 		gl = (GL4) drawable.getGL();
 		String vShaderSource[], fShaderSource[] ;
 		
+		// Initialize shaders
 		vShaderSource = readShaderSource("src/H1_iking_V.shader"); // read vertex shader
 		fShaderSource = readShaderSource("src/H1_iking_F.shader"); // read fragment shader
 		vfPrograms = initShaders(vShaderSource, fShaderSource);		
 		
-		// 1. generate vertex arrays indexed by vao
+		// Generate vertex arrays indexed by vao
 		gl.glGenVertexArrays(vao.length, vao, 0); // vao stores the handles, starting position 0
 		System.out.println(vao.length); // we only use one vao
 		gl.glBindVertexArray(vao[0]); // use handle 0
 		
-		// 2. generate vertex buffers indexed by vbo: here vertices and colors
+		// Generate vertex buffers indexed by vbo: here vertices and colors
 		gl.glGenBuffers(vbo.length, vbo, 0);
 		System.out.println(vbo.length); 
 		
-		// First, generate some random points inside the circle
+		// Load initial points for dust and last 8 for square
 		gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[POSITION]); // use handle 0 	
 		vPoints = genRandomPoints();
 		FloatBuffer vBuf = Buffers.newDirectFloatBuffer(vPoints);
-		gl.glBufferData(GL_ARRAY_BUFFER, vBuf.limit()*Float.BYTES,  //# of float * size of floats in bytes
-				vBuf, // the vertex array
-				GL_STATIC_DRAW); 
-		gl.glVertexAttribPointer(0, 2, GL_FLOAT, false, 0, 0); // associate vbo[0] with active vao buffer
+		gl.glBufferData(GL_ARRAY_BUFFER, vBuf.limit()*Float.BYTES, vBuf, GL_STATIC_DRAW); 
+		gl.glVertexAttribPointer(POSITION, 2, GL_FLOAT, false, 0, 0); 
 		
-		// Then load vbo[1] with color data
+		// Give points random color data
 		vColors = genRandomColors();
 		gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[COLOR]); // use handle 1 		
-		
 		FloatBuffer cBuf = Buffers.newDirectFloatBuffer(vColors);
-		gl.glBufferData(GL_ARRAY_BUFFER, cBuf.limit()*Float.BYTES,  //# of float * size of floats in bytes
-				cBuf, //the color array
-				GL_STATIC_DRAW); 		
-		gl.glVertexAttribPointer(1, 4, GL_FLOAT, false, 0, 0); // associate vbo[1] with active vao buffer
+		gl.glBufferData(GL_ARRAY_BUFFER, cBuf.limit()*Float.BYTES, cBuf, GL_STATIC_DRAW); 		
+		gl.glVertexAttribPointer(COLOR, 4, GL_FLOAT, false, 0, 0); 
 		
 		// Generate starting velocities for points
 		velocities = genRandom2d();
 		
-		// 5. enable VAO with loaded VBO data
-		gl.glEnableVertexAttribArray(0); // enable the 0th vertex attribute: position
-		gl.glEnableVertexAttribArray(1); // enable the 1th vertex attribute: color
+		// Enable VAO with loaded VBO data
+		gl.glEnableVertexAttribArray(POSITION); // enable the 0th vertex attribute: position
+		gl.glEnableVertexAttribArray(COLOR); // enable the 1th vertex attribute: color
+		
+		// Set up uniforms that remain static
+		int dsPointer = gl.glGetUniformLocation(vfPrograms, "dust_size");
+		int psPointer = gl.glGetUniformLocation(vfPrograms, "mover_size");
+		int wPointer = gl.glGetUniformLocation(vfPrograms, "width");
+		int hPointer = gl.glGetUniformLocation(vfPrograms, "height");
+		
+		// I have no clue why these need to be adjusted like this. I assume it has something to do with
+		// The toolbar at the top?
+		gl.glProgramUniform1f(vfPrograms, wPointer, this.getWidth()-15);
+		gl.glProgramUniform1f(vfPrograms, hPointer, this.getHeight()-38);
+		gl.glProgramUniform1f(vfPrograms, dsPointer, DUST_SIZE);
+		gl.glProgramUniform1f(vfPrograms, psPointer, MOVER_SIZE);
+		
+		// So rotating pixel is bigger and we can specify this in GLSL 
+		gl.glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 	}
 }

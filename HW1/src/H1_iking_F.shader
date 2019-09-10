@@ -30,7 +30,7 @@ void main(void) {
 	 		fColor = vec4(1.0, 1.0, 1.0, 1.0);
 	 	}
 	 	else {
-	 		fColor = vec4(color.x, color.y, color.z, 0.0);
+	 		fColor = vec4(0.0, 0.0, 0.0, 0.0);
 	 	}
 	}
 }
