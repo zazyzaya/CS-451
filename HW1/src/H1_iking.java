@@ -17,10 +17,12 @@ public class H1_iking extends JOGL1_3_VertexArray {
 	private float velocities[];
 	private float vPoints[];
 	private float vColors[];
+	private float theta = 0f;
 	
 	// Tweak these for nicer renderings
 	private static int 		NUM_PARTICLES = 100;
 	private static float 	MAX_VELOCITY = 0.01f;
+	private static float 	ROT_SPEED = 0.01f;
 	
 	public static void main(String[] args) {
 		 new H1_iking();
@@ -69,6 +71,10 @@ public class H1_iking extends JOGL1_3_VertexArray {
 			// Make them negative 50% of the time
 			retList[i] = (rnd.nextInt(2) % 2 == 0) ? retList[i] * -1 : retList[i];
 		}
+		
+		// Spinning point
+		retList[0] = 0.0f;
+		retList[1] = 1.0f;
 		
 		float corners[] = {
 				-1.0f, 1.0f,
@@ -122,7 +128,7 @@ public class H1_iking extends JOGL1_3_VertexArray {
 		
 		// Cant think of a way to do this on GPU. Need some way for shaders to write to buffer
 		// which I think is illegal
-		for (int i=0; i<NUM_PARTICLES; i++) {
+		for (int i=1; i<NUM_PARTICLES; i++) {
 			float x,y;
 			x = vPoints[i*2]; 
 			y = vPoints[i*2 + 1]; 
@@ -152,9 +158,12 @@ public class H1_iking extends JOGL1_3_VertexArray {
 		
 		int wPointer = gl.glGetUniformLocation(vfPrograms, "width");
 		int hPointer = gl.glGetUniformLocation(vfPrograms, "height");
+		int tPointer = gl.glGetUniformLocation(vfPrograms, "theta");
 		
-		gl.glProgramUniform1f(vfPrograms, wPointer, (float)this.getWidth());
-		gl.glProgramUniform1f(vfPrograms, hPointer, (float)this.getHeight());
+		theta += ROT_SPEED;
+		gl.glProgramUniform1f(vfPrograms, wPointer, this.WIDTH);
+		gl.glProgramUniform1f(vfPrograms, hPointer, this.HEIGHT);
+		gl.glProgramUniform1f(vfPrograms, tPointer, theta);
 		
 		gl.glDrawArrays(GL_QUADS, NUM_PARTICLES, 4);
 		
