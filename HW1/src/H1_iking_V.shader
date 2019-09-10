@@ -1,5 +1,5 @@
 #version	450	
-layout (location = 0) in vec3 iPosition; // VBO: vbo[0]
+layout (location = 0) in vec2 iPosition; // VBO: vbo[0]
 layout (location = 1) in vec4 iColor;    // VBO: vbo[1]
 
 out vec4 color; // output to fragment shader

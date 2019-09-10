@@ -47,10 +47,10 @@ public class H1_iking extends JOGL1_3_VertexArray {
 		// Shader checks if alpha is 0 in color buffer then checks if on circle circumference
 		// if so, it raises it to 1
 		float corners[] = {
-				1.0f, 1.0f, 1.0f, 0.0f,
-				1.0f, 1.0f, 1.0f, 0.0f,
-				1.0f, 1.0f, 1.0f, 0.0f,
-				1.0f, 1.0f, 1.0f, 0.0f
+				0.3f, 0.3f, 0.3f, 0.3f,
+				0.3f, 0.3f, 0.3f, 0.3f,
+				0.3f, 0.3f, 0.3f, 0.3f,
+				0.3f, 0.3f, 0.3f, 0.3f
 		};
 		
 		// Move corner points into list as well
@@ -59,11 +59,11 @@ public class H1_iking extends JOGL1_3_VertexArray {
 	}
 	
 	private float[] genRandomPoints() {
-		float retList[] = new float[NUM_PARTICLES*3 + 16];
+		float retList[] = new float[NUM_PARTICLES*2 + 16];
 		
 		// We ignore the z axis in the vertex shader, but it's left so the frag shader can 
 		// Use this method for color also
-		for (int i=0; i<NUM_PARTICLES*3; i++) {
+		for (int i=0; i<NUM_PARTICLES*2; i++) {
 			// Approx (root 2)/2 so we know it's within the circle no matter what
 			retList[i] = rnd.nextFloat() * 0.7f;
 			// Make them negative 50% of the time
@@ -71,14 +71,14 @@ public class H1_iking extends JOGL1_3_VertexArray {
 		}
 		
 		float corners[] = {
-				-1.0f, 1.0f, 0.0f,
-				1.0f, 1.0f, 0.0f,
-				1.0f, -1.0f, 0.0f,
-				-1.0f, -1.0f, 0.0f
+				-1.0f, 1.0f,
+				1.0f, 1.0f,
+				1.0f, -1.0f,
+				-1.0f, -1.0f
 		};
 		
 		// Move corner points into list as well
-		System.arraycopy(corners, 0, retList, NUM_PARTICLES*3, 12);
+		System.arraycopy(corners, 0, retList, NUM_PARTICLES*2, 8);
 		return retList;
 	}
 	
@@ -124,8 +124,8 @@ public class H1_iking extends JOGL1_3_VertexArray {
 		// which I think is illegal
 		for (int i=0; i<NUM_PARTICLES; i++) {
 			float x,y;
-			x = vPoints[i*3]; 
-			y = vPoints[i*3 + 1]; 
+			x = vPoints[i*2]; 
+			y = vPoints[i*2 + 1]; 
 			
 			if (Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2)) >= 1) {
 				float[] newV = reflect(x, y, velocities[i*2], velocities[i*2 + 1]);
@@ -133,8 +133,8 @@ public class H1_iking extends JOGL1_3_VertexArray {
 				velocities[i*2 + 1] = newV[1];
 			}
 			
-			vPoints[i*3] += velocities[i*2];
-			vPoints[i*3 + 1] += velocities[i*2 + 1];
+			vPoints[i*2] += velocities[i*2];
+			vPoints[i*2 + 1] += velocities[i*2 + 1];
 		}
 		
 		// load vbo[0] with vertex data
@@ -142,7 +142,7 @@ public class H1_iking extends JOGL1_3_VertexArray {
 		
 		FloatBuffer vBuf = Buffers.newDirectFloatBuffer(vPoints);
 		gl.glBufferData(GL_ARRAY_BUFFER, vBuf.limit()*Float.BYTES, vBuf, GL_STATIC_DRAW); 
-		gl.glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0); // associate vbo[0] with active VAO buffer
+		gl.glVertexAttribPointer(0, 2, GL_FLOAT, false, 0, 0); // associate vbo[0] with active VAO buffer
 		
 		// load vbo[1] with color data
 		gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[1]); // use handle 1 		
@@ -150,11 +150,16 @@ public class H1_iking extends JOGL1_3_VertexArray {
 		gl.glBufferData(GL_ARRAY_BUFFER, cBuf.limit()*Float.BYTES, cBuf, GL_STATIC_DRAW); 		
 		gl.glVertexAttribPointer(1, 4, GL_FLOAT, false, 0, 0); // associate vbo[1] with active vao buffer
 		
-		gl.glPointSize(6.0f);
-		gl.glDrawArrays(GL_POINTS, 0, NUM_PARTICLES);
+		int wPointer = gl.glGetUniformLocation(vfPrograms, "width");
+		int hPointer = gl.glGetUniformLocation(vfPrograms, "height");
+		
+		gl.glProgramUniform1f(vfPrograms, wPointer, (float)this.getWidth());
+		gl.glProgramUniform1f(vfPrograms, hPointer, (float)this.getHeight());
+		
 		gl.glDrawArrays(GL_QUADS, NUM_PARTICLES, 4);
 		
-		
+		gl.glPointSize(6.0f);
+		gl.glDrawArrays(GL_POINTS, 0, NUM_PARTICLES);
 	}
 	
 	public void init(GLAutoDrawable drawable) {
@@ -181,7 +186,7 @@ public class H1_iking extends JOGL1_3_VertexArray {
 		gl.glBufferData(GL_ARRAY_BUFFER, vBuf.limit()*Float.BYTES,  //# of float * size of floats in bytes
 				vBuf, // the vertex array
 				GL_STATIC_DRAW); 
-		gl.glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0); // associate vbo[0] with active vao buffer
+		gl.glVertexAttribPointer(0, 2, GL_FLOAT, false, 0, 0); // associate vbo[0] with active vao buffer
 		
 		// Then load vbo[1] with color data
 		vColors = genRandomColors();
