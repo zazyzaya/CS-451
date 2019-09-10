@@ -1,7 +1,7 @@
 #version	450	
 
 in  vec4 color; // (interpolated) value from vertex shader
-in  vec4 gl_FragCoord;
+layout(pixel_center_integer) in  vec4 gl_FragCoord;
 
 uniform float width;
 uniform float height;
@@ -26,7 +26,7 @@ void main(void) {
  		vec2 norm_coords = normalize_coords(gl_FragCoord.xy);
  		float dist = length(norm_coords);
  		
-	 	if (dist >= 1 && dist <=1.001) {
+	 	if (dist >= 1 && dist <=1.01) {
 	 		fColor = vec4(1.0, 1.0, 1.0, 1.0);
 	 	}
 	 	else {

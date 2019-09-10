@@ -161,8 +161,10 @@ public class H1_iking extends JOGL1_3_VertexArray {
 		int tPointer = gl.glGetUniformLocation(vfPrograms, "theta");
 		
 		theta += ROT_SPEED;
-		gl.glProgramUniform1f(vfPrograms, wPointer, this.WIDTH);
-		gl.glProgramUniform1f(vfPrograms, hPointer, this.HEIGHT);
+		// I have no clue why these need to be adjusted like this. I assume it has something to do with
+		// The toolbar at the top?
+		gl.glProgramUniform1f(vfPrograms, wPointer, this.WIDTH-15);
+		gl.glProgramUniform1f(vfPrograms, hPointer, this.HEIGHT-40);
 		gl.glProgramUniform1f(vfPrograms, tPointer, theta);
 		
 		gl.glDrawArrays(GL_QUADS, NUM_PARTICLES, 4);
