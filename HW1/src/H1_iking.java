@@ -1,11 +1,11 @@
-import com.jogamp.common.nio.Buffers;
+import java.awt.Frame;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.nio.*;
+import com.jogamp.opengl.GL4.*;
 import com.jogamp.opengl.*;
-
-import static com.jogamp.opengl.GL.GL_ARRAY_BUFFER;
-import static com.jogamp.opengl.GL.GL_FLOAT;
-import static com.jogamp.opengl.GL.GL_STATIC_DRAW;
-import static com.jogamp.opengl.GL2ES3.GL_COLOR;
-import static com.jogamp.opengl.GL4.*;
+import com.jogamp.opengl.awt.GLCanvas;
+import com.jogamp.common.nio.Buffers;
 import java.nio.FloatBuffer;
 import java.util.Random;
 
