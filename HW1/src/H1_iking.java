@@ -1,11 +1,11 @@
-import java.awt.Frame;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.nio.*;
-import com.jogamp.opengl.GL4.*;
-import com.jogamp.opengl.*;
-import com.jogamp.opengl.awt.GLCanvas;
 import com.jogamp.common.nio.Buffers;
+import com.jogamp.opengl.*;
+
+import static com.jogamp.opengl.GL.GL_ARRAY_BUFFER;
+import static com.jogamp.opengl.GL.GL_FLOAT;
+import static com.jogamp.opengl.GL.GL_STATIC_DRAW;
+import static com.jogamp.opengl.GL2ES3.GL_COLOR;
+import static com.jogamp.opengl.GL4.*;
 import java.nio.FloatBuffer;
 import java.util.Random;
 
@@ -20,10 +20,10 @@ public class H1_iking extends JOGL1_3_VertexArray {
 	private float theta = 0f;
 	
 	// Tweak these for nicer renderings
-	private static int 		NUM_PARTICLES = 5000;
+	private static int 		NUM_PARTICLES = 100;
 	private static float 	MAX_VELOCITY = 0.01f;
 	private static float 	ROT_SPEED = 0.01f;
-	private static float 	DUST_SIZE = 2f;
+	private static float 	DUST_SIZE = 6f;
 	private static float 	MOVER_SIZE = 20f;
 	
 	public static void main(String[] args) {

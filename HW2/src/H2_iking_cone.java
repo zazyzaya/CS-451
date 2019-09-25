@@ -12,28 +12,29 @@ import java.nio.FloatBuffer;
 import java.util.Random;
 
 public class H2_iking_cone extends JOGL1_3_VertexArray {
-	private int vao[ ] = new int[1];
-	private int vbo[ ] = new int[1];	// Position
-	private static int POSITION=0;
-	private static Random rnd = new Random();
-	private static float xth = rnd.nextFloat()*2f;
-	private static float yth = rnd.nextFloat()*2f;
-	private static float zth = rnd.nextFloat()*2f;
-	private double num_ticks = 0;
+	protected int vao[ ] = new int[1];
+	protected int vbo[ ] = new int[1];	// Position
+	protected static int POSITION=0;
+	protected static Random rnd = new Random();
+	protected static float xth = rnd.nextFloat()*2f;
+	protected static float yth = rnd.nextFloat()*2f;
+	protected static float zth = rnd.nextFloat()*2f;
+	protected double num_ticks = 0;
 	
 	// Change these for more pleasing animation
-	private static float x_delta = 0.005f;
-	private static float y_delta = 0.0031f;
-	private static float z_delta = 0.003f; 
+	protected static float x_delta = 0.005f;
+	protected static float y_delta = 0.0031f;
+	protected static float z_delta = 0.003f; 
 	
-	private static int NUM_ITERS = 10;	// When to stop adding vectors
-	private static float HEIGHT = 1f;	// How tall the shape is
+	protected static int INC_TIMING = 70; 	// How often to iterate
+	protected static int NUM_ITERS = 10;	// When to stop adding vectors
+	protected float HEIGHT = 1f;	// How tall the shape is
 	
 	
 	/**
 	 * Performs multiplication on two 4x4 matrices
 	 */
-	private float[] matMult4x4(float[] m1, float[] m2) {
+	protected float[] matMult4x4(float[] m1, float[] m2) {
 		float[] product = new float[16];
 		
 		for (int i=0; i<16; i++) {
@@ -62,7 +63,7 @@ public class H2_iking_cone extends JOGL1_3_VertexArray {
 	 * @param thetaZ
 	 * @return
 	 */
-	private float[] getRotMatrix(float thetaX, float thetaY, float thetaZ){
+	protected float[] getRotMatrix(float thetaX, float thetaY, float thetaZ){
 		// Row major rot matrix
 		float[] xrot = {
 				1f, 0f, 0f, 0f,
@@ -94,30 +95,24 @@ public class H2_iking_cone extends JOGL1_3_VertexArray {
 	 * @param s
 	 * @return
 	 */
-	private float[] getStartPoints(Shape s) {
-		float startPoints[] = null;
-		
-		if (s == Shape.CONE) {
-			startPoints = new float[] { 
-					  0f, 1f, 0f,
-					  -1f, 0f, 0f,
-					  0f, 0f, HEIGHT,
-					  
-					  -1f, 0f, 0f,
-					  0f, -1f, 0f, 
-					  0f, 0f, HEIGHT,
-					  
-					  0f, -1f, 0f, 
-					  1f, 0f, 0f,
-					  0f, 0f, HEIGHT,
-					  
-					  1f, 0f, 0f,
-					  0f, 1f, 0f,
-					  0f, 0f, HEIGHT,
-			};
-		}
-		
-		return startPoints;
+	protected float[] getStartPoints() {
+		return new float[] { 
+			  0f, 1f, 0f,
+			  -1f, 0f, 0f,
+			  0f, 0f, HEIGHT,
+			  
+			  -1f, 0f, 0f,
+			  0f, -1f, 0f, 
+			  0f, 0f, HEIGHT,
+			  
+			  0f, -1f, 0f, 
+			  1f, 0f, 0f,
+			  0f, 0f, HEIGHT,
+			  
+			  1f, 0f, 0f,
+			  0f, 1f, 0f,
+			  0f, 0f, HEIGHT,
+		};
 	}
 	
 	/**
@@ -125,7 +120,7 @@ public class H2_iking_cone extends JOGL1_3_VertexArray {
 	 * @param vec
 	 * @return
 	 */
-	private float[] norm(float[] vec) {
+	protected float[] norm(float[] vec) {
 		float magnitude = 0;
 		for (int i=0; i<vec.length; i++) {
 			magnitude += vec[i] * vec[i];
@@ -147,7 +142,7 @@ public class H2_iking_cone extends JOGL1_3_VertexArray {
 	 * @param v2
 	 * @return
 	 */
-	private float[] vectorAdd(float[] v1, float[] v2) {
+	protected float[] vectorAdd(float[] v1, float[] v2) {
 		float ret[] = new float[v1.length];
 		
 		for (int i=0; i<v1.length; i++) {
@@ -157,7 +152,7 @@ public class H2_iking_cone extends JOGL1_3_VertexArray {
 		return ret;
 	}
 	
-	private float[] incrimentPoints(float[] pts){
+	protected float[] incrimentPoints(float[] pts){
 		float[] newVectors = new float[pts.length * 2];
 		float[] v1 = new float[3], v2 = new float[3], newV = new float[3];
 		float[] ctr = { 0.0f, 0.0f, HEIGHT };
@@ -191,16 +186,15 @@ public class H2_iking_cone extends JOGL1_3_VertexArray {
 	}
 	
 	
-	public void display(GLAutoDrawable drawable) {
+	public void display(GLAutoDrawable drawable) {	
 		num_ticks += 1;
-		
 		gl = (GL4) drawable.getGL();
 		
 		// Clear depth and color buffers
 		gl.glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
 		// Increment number of points
-		if (num_ticks % 60 == 0 && num_ticks/60 < NUM_ITERS) {
+		if (num_ticks % INC_TIMING == 0 && num_ticks/60 < NUM_ITERS) {
 			vPoints = incrimentPoints(vPoints);
 		}
 		
@@ -227,6 +221,9 @@ public class H2_iking_cone extends JOGL1_3_VertexArray {
 		gl = (GL4) drawable.getGL();
 		String vShaderSource[], fShaderSource[] ;
 		
+		// Set up initial points for cone
+		vPoints = getStartPoints();
+		
 		// Initialize shaders
 		vShaderSource = readShaderSource("src/H2_iking_V.shader"); // read vertex shader
 		fShaderSource = readShaderSource("src/H2_iking_F.shader"); // read fragment shader
@@ -241,33 +238,10 @@ public class H2_iking_cone extends JOGL1_3_VertexArray {
 		gl.glGenBuffers(vbo.length, vbo, 0);
 		System.out.println(vbo.length); 
 		
-		// Generate initial shape data
-		vPoints = getStartPoints(Shape.CONE); 
-		
-		int i=0;
-		System.out.println("Points in VBO");
-		for (float v : vPoints) {
-			System.out.print(v + ", ");
-			i++;
-			if (i%3 == 0) {
-				System.out.println();
-			}
-		}
-		
-		// Load initial points for dust and last 8 for square
-		gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[POSITION]); // use handle 0 	
-		FloatBuffer vBuf = Buffers.newDirectFloatBuffer(vPoints);
-		gl.glBufferData(GL_ARRAY_BUFFER, vBuf.limit()*Float.BYTES, vBuf, GL_STATIC_DRAW); 
-		gl.glVertexAttribPointer(POSITION, 3, GL_FLOAT, false, 0, 0); 
-		
 		// Enable VAO with loaded VBO data
 		gl.glEnableVertexAttribArray(POSITION); // enable the 0th vertex attribute: position
 		
 		// So 3D clips correctly
 		gl.glEnable(GL_DEPTH_TEST);
 	}
-	
-	private enum Shape {
-		CONE, CYLINDER, SPHERE
-	};
 }
