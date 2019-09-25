@@ -11,10 +11,10 @@ import com.jogamp.common.nio.Buffers;
 import java.nio.FloatBuffer;
 import java.util.Random;
 
-public class H2_iking extends JOGL1_3_VertexArray {
+public class H2_iking_cone extends JOGL1_3_VertexArray {
 	private int vao[ ] = new int[1];
-	private int vbo[ ] = new int[2];	// Position, color
-	private static int POSITION=0, COLOR=1;
+	private int vbo[ ] = new int[1];	// Position
+	private static int POSITION=0;
 	private static Random rnd = new Random();
 	private static float xth = rnd.nextFloat()*2f;
 	private static float yth = rnd.nextFloat()*2f;
@@ -94,7 +94,7 @@ public class H2_iking extends JOGL1_3_VertexArray {
 	 * @param s
 	 * @return
 	 */
-	private float[][] getStartPoints(Shape s) {
+	private float[] getStartPoints(Shape s) {
 		float startPoints[] = null;
 		
 		if (s == Shape.CONE) {
@@ -117,23 +117,7 @@ public class H2_iking extends JOGL1_3_VertexArray {
 			};
 		}
 		
-		// Will just have one color and it's opposite as the polygon colors
-		float startColors[] = new float[startPoints.length];
-		float rndColor[] = { 
-				rnd.nextFloat()*0.5f + 0.5f,
-				rnd.nextFloat()*0.5f + 0.5f,
-				rnd.nextFloat()*0.5f + 0.5f
-		};
-		
-		// Alternate saying polygon (groups of 3 points, or 9 values) is rndColor, or the inverse
-		for (int i=0; i<startColors.length; i++) {
-			if (i % 18 >= 9) 
-				startColors[i] = rndColor[i%3];
-			else
-				startColors[i] = 1 - rndColor[i%3];
-		}
-		
-		return new float[][] { startPoints, startColors};
+		return startPoints;
 	}
 	
 	/**
@@ -173,7 +157,7 @@ public class H2_iking extends JOGL1_3_VertexArray {
 		return ret;
 	}
 	
-	private float[][] incrimentPoints(float[] pts, float[] colors){
+	private float[] incrimentPoints(float[] pts){
 		float[] newVectors = new float[pts.length * 2];
 		float[] v1 = new float[3], v2 = new float[3], newV = new float[3];
 		float[] ctr = { 0.0f, 0.0f, HEIGHT };
@@ -198,25 +182,12 @@ public class H2_iking extends JOGL1_3_VertexArray {
 			}
 		}
 		
-		float[] newColors = new float[colors.length * 2];
-		
-		for (int i=0; i<colors.length; i++) {
-			// We set colors in groups of 18 over 9 cycles (groups of 6 polygons)
-			int offset = i/9;
-			
-			// Set original color
-			newColors[(i + offset*9) % newColors.length] = colors[i];
-			
-			// Set interpolated color
-			newColors[(i+9 + offset*9) % newColors.length] = (colors[i] + colors[(i+9) % colors.length]) / 2;
-		}
-		
-		return new float[][] {newVectors, newColors};
+		return newVectors;
 	}
 	
 	
 	public static void main(String[] args) {
-		 new H2_iking();
+		 new H2_iking_cone();
 	}
 	
 	
@@ -230,9 +201,7 @@ public class H2_iking extends JOGL1_3_VertexArray {
 
 		// Increment number of points
 		if (num_ticks % 60 == 0 && num_ticks/60 < NUM_ITERS) {
-			float vPC[][] = incrimentPoints(vPoints, vColors);
-			vPoints = vPC[0];
-			vColors = vPC[1];
+			vPoints = incrimentPoints(vPoints);
 		}
 		
 		// Update location of cone
@@ -240,11 +209,6 @@ public class H2_iking extends JOGL1_3_VertexArray {
 		FloatBuffer vBuf = Buffers.newDirectFloatBuffer(vPoints);
 		gl.glBufferData(GL_ARRAY_BUFFER, vBuf.limit()*Float.BYTES, vBuf, GL_STATIC_DRAW); 
 		gl.glVertexAttribPointer(POSITION, 3, GL_FLOAT, false, 0, 0); // associate vbo[0] with active VAO buffer
-		
-		gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[COLOR]);
-		FloatBuffer cBuf = Buffers.newDirectFloatBuffer(vColors);
-		gl.glBufferData(GL_ARRAY_BUFFER, cBuf.limit()*Float.BYTES, cBuf, GL_STATIC_DRAW);
-		gl.glVertexAttribPointer(COLOR, 3, GL_FLOAT, false, 0, 0);
 		
 		xth += x_delta;
 		yth += y_delta;
@@ -278,23 +242,11 @@ public class H2_iking extends JOGL1_3_VertexArray {
 		System.out.println(vbo.length); 
 		
 		// Generate initial shape data
-		float vPC[][] = getStartPoints(Shape.CONE); 
-		vPoints = vPC[0];
-		vColors = vPC[1];
+		vPoints = getStartPoints(Shape.CONE); 
 		
 		int i=0;
 		System.out.println("Points in VBO");
 		for (float v : vPoints) {
-			System.out.print(v + ", ");
-			i++;
-			if (i%3 == 0) {
-				System.out.println();
-			}
-		}
-		
-		i=0;
-		System.out.println("Colors in VBO");
-		for (float v : vColors) {
 			System.out.print(v + ", ");
 			i++;
 			if (i%3 == 0) {
@@ -308,15 +260,8 @@ public class H2_iking extends JOGL1_3_VertexArray {
 		gl.glBufferData(GL_ARRAY_BUFFER, vBuf.limit()*Float.BYTES, vBuf, GL_STATIC_DRAW); 
 		gl.glVertexAttribPointer(POSITION, 3, GL_FLOAT, false, 0, 0); 
 		
-		// Give points random color data
-		gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[COLOR]); // use handle 1 		
-		FloatBuffer cBuf = Buffers.newDirectFloatBuffer(vColors);
-		gl.glBufferData(GL_ARRAY_BUFFER, cBuf.limit()*Float.BYTES, cBuf, GL_STATIC_DRAW); 		
-		gl.glVertexAttribPointer(COLOR, 3, GL_FLOAT, false, 0, 0); 
-		
 		// Enable VAO with loaded VBO data
 		gl.glEnableVertexAttribArray(POSITION); // enable the 0th vertex attribute: position
-		gl.glEnableVertexAttribArray(COLOR); // enable the 1th vertex attribute: color
 		
 		// So 3D clips correctly
 		gl.glEnable(GL_DEPTH_TEST);
