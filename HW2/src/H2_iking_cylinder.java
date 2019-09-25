@@ -3,6 +3,7 @@ import static com.jogamp.opengl.GL.GL_COLOR_BUFFER_BIT;
 import static com.jogamp.opengl.GL.GL_DEPTH_BUFFER_BIT;
 import static com.jogamp.opengl.GL.GL_DEPTH_TEST;
 import static com.jogamp.opengl.GL.GL_FLOAT;
+import static com.jogamp.opengl.GL.GL_LINES;
 import static com.jogamp.opengl.GL.GL_STATIC_DRAW;
 import static com.jogamp.opengl.GL.GL_TRIANGLES;
 import static com.jogamp.opengl.GL4.*;
@@ -110,14 +111,15 @@ public class H2_iking_cylinder extends H2_iking_cone {
 		return ret;
 	}
 	
-	protected float[] incrimentPoints(float[] pts, boolean isTop){
-		float[] newVectors = new float[pts.length * 2];
+	protected float[][] incrimentPointsCyl(float[] pts){
+		float[][] newVectors = {new float[pts.length * 2], new float[pts.length * 2]};
 		float[] v1 = new float[3], v2 = new float[3], newV = new float[3];
-		float[] ctr = isTop ? new float[] { 0.0f, 0.0f, HEIGHT } : new float[] {0.0f, 0.0f, 0.0f};
+		float[] ctrb = new float[] {0.0f, 0.0f, 0.0f};
+		float[] ctrt = new float[] {0.0f, 0.0f, HEIGHT};
 		
 		// Having a list like this lets us avoid a thousand arrcopy calls, so I can just
 		// do it in the below loop
-		float[][] copyOrder = {v1, newV, ctr, newV, v2, ctr};
+		float[][] copyOrder = {v1, newV, ctrb, newV, v2, ctrb};
 		
 		// Act on each group of 9 points, each polygon at the same time
 		for(int i=0; i<pts.length/9; i++) {
@@ -127,12 +129,17 @@ public class H2_iking_cylinder extends H2_iking_cone {
 			System.arraycopy(pts, i*9+3, v2, 0, 3);
 			
 			// Then calculate the new vector in the middle
-			float split[] = isTop ? norm(vectorAdd(v1, v2)) : norm(vectorAdd(v1, v2));
+			float split[] = norm(vectorAdd(v1, v2));
 			System.arraycopy(split, 0, newV, 0, 3);
 			
 			// Then add everything to the new vector list in order
 			for (int j=0; j<6; j++) {
-				System.arraycopy(copyOrder[j], 0, newVectors, i*18 + j*3, 3);
+				// Build top and bottom circles (using same coords) 
+				System.arraycopy(copyOrder[j], 0, newVectors[0], i*18 + j*3, 3);
+				System.arraycopy(copyOrder[j], 0, newVectors[1], i*18 + j*3, 3);
+				
+				// Add the height into the top vectors
+				newVectors[1][i*18+j*3+2] = HEIGHT;
 			}
 		}
 		
@@ -153,9 +160,10 @@ public class H2_iking_cylinder extends H2_iking_cone {
 		gl.glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
 		// Increment number of points
-		if (num_ticks % 60 == 0 && num_ticks/60 < NUM_ITERS) {
-			top = incrimentPoints(top, true);
-			bottom = incrimentPoints(bottom, false);
+		if (num_ticks % INC_TIMING == 0 && num_ticks/60 < NUM_ITERS) {
+			float inc[][] = incrimentPointsCyl(top);
+			top = inc[0];
+			bottom = inc[1];
 			connectors = connectTopAndBottom(top, bottom);
 			
 			// Load new points into vPoints
@@ -163,20 +171,40 @@ public class H2_iking_cylinder extends H2_iking_cone {
 			combineTopAndBottom(top, bottom, vPoints);
 		}
 		
+		// Restart the incriment process
+		if (num_ticks/60 == RESET_AT) {
+			num_ticks = 0;
+			vPoints = getStartPoints();
+		}
+		
+		// Rotate
 		xth += x_delta;
 		yth += y_delta;
 		zth += z_delta;
-		float[] rotMatrix = getRotMatrix(xth, yth, zth);
 		
+		// Grow or shrink
+		if (scale >= MAX_SCALE) {
+			isShrinking = true;
+		}
+		else if (scale <= MIN_SCALE) {
+			isShrinking = false;
+		}
+		scale = isShrinking ? scale-scale_delta : scale+scale_delta;
+		
+		// Combine transforms and send to GPU
+		float[] rotMatrix = getRotMatrix(xth, yth, zth);
+		rotMatrix = matMult4x4(rotMatrix, getScaleMatrix(scale));
+		
+		int lPtr = gl.glGetUniformLocation(vfPrograms, "drawLines");
 		int rmPtr = gl.glGetUniformLocation(vfPrograms, "rotMatrix");
 		gl.glProgramUniformMatrix4fv(vfPrograms, rmPtr, 1, true, rotMatrix, 0);
+		gl.glProgramUniform1i(vfPrograms, lPtr, 0);
 		
 		// Draw caps of cylinder
 		gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[POSITION]); // use handle 0 		
 		FloatBuffer vBuf = Buffers.newDirectFloatBuffer(vPoints);
 		gl.glBufferData(GL_ARRAY_BUFFER, vBuf.limit()*Float.BYTES, vBuf, GL_STATIC_DRAW); 
 		gl.glVertexAttribPointer(POSITION, 3, GL_FLOAT, false, 0, 0); // associate vbo[0] with active VAO buffer
-		
 		gl.glDrawArrays(GL_TRIANGLES, 0, vPoints.length / 3);
 		
 		// Draw vertical connectors of cylinder
@@ -184,12 +212,21 @@ public class H2_iking_cylinder extends H2_iking_cone {
 		FloatBuffer cBuf = Buffers.newDirectFloatBuffer(connectors);
 		gl.glBufferData(GL_ARRAY_BUFFER, cBuf.limit()*Float.BYTES, cBuf, GL_STATIC_DRAW); 
 		gl.glVertexAttribPointer(POSITION, 3, GL_FLOAT, false, 0, 0);
-		
 		gl.glDrawArrays(GL_QUADS, 0, connectors.length / 3);
+		
+		if (OVERLAY_WIRES) {
+			gl.glProgramUniform1i(vfPrograms, lPtr, 1);
+			gl.glDrawArrays(GL_LINES, 0, connectors.length / 3);
+			
+			gl.glBufferData(GL_ARRAY_BUFFER, vBuf.limit()*Float.BYTES, vBuf, GL_STATIC_DRAW); 
+			gl.glVertexAttribPointer(POSITION, 3, GL_FLOAT, false, 0, 0); // associate vbo[0] with active VAO buffer
+			gl.glDrawArrays(GL_LINES, 0, vPoints.length / 3);
+		}
 	}
 	
 	public void init(GLAutoDrawable drawable) {
 		super.init(drawable);
+		HEIGHT = 2;
 		vPoints = getStartPoints();
 	}
 }

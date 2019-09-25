@@ -3,6 +3,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.nio.*;
 
+import static com.jogamp.opengl.GL.GL_TRIANGLES;
 import static com.jogamp.opengl.GL2ES3.GL_COLOR;
 import static com.jogamp.opengl.GL4.*;
 import com.jogamp.opengl.*;
@@ -18,16 +19,28 @@ public class H2_iking_cone extends JOGL1_3_VertexArray {
 	protected static Random rnd = new Random();
 	protected static float xth = rnd.nextFloat()*2f;
 	protected static float yth = rnd.nextFloat()*2f;
-	protected static float zth = rnd.nextFloat()*2f;
+	protected static float zth = rnd.nextFloat()*2f + 1f;
+	protected static float scale = 0.5f;
+	protected boolean isShrinking = true;
 	protected double num_ticks = 0;
 	
 	// Change these for more pleasing animation
-	protected static float x_delta = 0.005f;
-	protected static float y_delta = 0.0031f;
-	protected static float z_delta = 0.003f; 
+	protected static boolean OVERLAY_WIRES = true;	// Mostly used to test faces are going where they should
+													// Looks pretty bad at higher poly counts
+	
+	// Speeds of rotation and scaling
+	protected static float x_delta = 0.006f;
+	protected static float y_delta = 0.0061f;
+	protected static float z_delta = 0.0011f; 
+	protected static float scale_delta = 0.001f; 
+	
+	// When to toggle shrink/grow 
+	protected static float MAX_SCALE = 0.5f;
+	protected static float MIN_SCALE = 0.25f;
 	
 	protected static int INC_TIMING = 70; 	// How often to iterate
 	protected static int NUM_ITERS = 10;	// When to stop adding vectors
+	protected static int RESET_AT = 12;		// When to reset the shape back to low-poly
 	protected float HEIGHT = 1f;	// How tall the shape is
 	
 	
@@ -53,7 +66,14 @@ public class H2_iking_cone extends JOGL1_3_VertexArray {
 		return product;
 	}
 	
-	
+	protected float[] getScaleMatrix(float sFactor) {
+		return new float[] {
+				sFactor, 0f, 0f, 0f,
+				0f, sFactor, 0f, 0f,
+				0f, 0f, sFactor, 0f,
+				0f, 0f, 0f, 1f
+		};
+	}
 	/**
 	 * Builds a rotation matrix given 3 angles in 3D space, then multiplies them together
 	 * to get a 4x4 matrix used for transforms in the vert shader
@@ -180,7 +200,6 @@ public class H2_iking_cone extends JOGL1_3_VertexArray {
 		return newVectors;
 	}
 	
-	
 	public static void main(String[] args) {
 		 new H2_iking_cone();
 	}
@@ -197,6 +216,11 @@ public class H2_iking_cone extends JOGL1_3_VertexArray {
 		if (num_ticks % INC_TIMING == 0 && num_ticks/60 < NUM_ITERS) {
 			vPoints = incrimentPoints(vPoints);
 		}
+		// Restart the incriment process
+		if (num_ticks/60 == RESET_AT) {
+			num_ticks = 0;
+			vPoints = getStartPoints();
+		}
 		
 		// Update location of cone
 		gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[POSITION]); // use handle 0 		
@@ -207,13 +231,31 @@ public class H2_iking_cone extends JOGL1_3_VertexArray {
 		xth += x_delta;
 		yth += y_delta;
 		zth += z_delta;
-		float[] rotMatrix = getRotMatrix(xth, yth, zth);
 		
+		if (scale >= MAX_SCALE) {
+			isShrinking = true;
+		}
+		else if (scale <= MIN_SCALE) {
+			isShrinking = false;
+		}
+		scale = isShrinking ? scale-scale_delta : scale+scale_delta;
+		
+		float[] rotMatrix = getRotMatrix(xth, yth, zth);
+		rotMatrix = matMult4x4(rotMatrix, getScaleMatrix(scale));
+		
+		// Update uniforms as needed
+		int lPtr = gl.glGetUniformLocation(vfPrograms, "drawLines");
 		int rmPtr = gl.glGetUniformLocation(vfPrograms, "rotMatrix");
 		gl.glProgramUniformMatrix4fv(vfPrograms, rmPtr, 1, true, rotMatrix, 0);
+		gl.glProgramUniform1i(vfPrograms, lPtr, 0);
 		
 		gl.glPointSize(6f);
 		gl.glDrawArrays(GL_TRIANGLES, 0, vPoints.length / 3);
+		
+		if (OVERLAY_WIRES) {
+			gl.glProgramUniform1i(vfPrograms, lPtr, 1);
+			gl.glDrawArrays(GL_LINES, 0, vPoints.length / 3);
+		}
 }
 	
 	
