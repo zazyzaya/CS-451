@@ -30,8 +30,6 @@ public class J2_1_Clock2d_iking extends Frame implements GLEventListener {
 	static int WIDTH = 800, HEIGHT = 800; // used to set the window size
 	FPSAnimator animator; // for thread that calls display() repetitively
 	
-	static Matrix_Lib_iking matOps;
-	
 	private String vShaderSourceFile = "src/clock_2d_iking_v.shader";
 	private String fShaderSourceFile = "src/clock_2d_iking_f.shader";
 	
@@ -96,7 +94,6 @@ public class J2_1_Clock2d_iking extends Frame implements GLEventListener {
 
 		hAngle = -(hsecond*PI)/60; // arc angle
 		int colorLoc = gl.glGetUniformLocation(vfPrograms, "color");
-		matStack.push(matOps.getIdentity());
 		
 		// Second hand
 		matStack.pushDupe();
@@ -104,7 +101,7 @@ public class J2_1_Clock2d_iking extends Frame implements GLEventListener {
 		float[] transform = matStack.peek();
 	
 		matStack.translate(c[0], c[1]);
-		matStack.rotate(-hAngle);
+		matStack.rotate(hAngle);
 		matStack.translate(-c[0], -c[1]);
 		gl.glLineWidth(1);
 		transDrawClock(c, h);
@@ -118,7 +115,7 @@ public class J2_1_Clock2d_iking extends Frame implements GLEventListener {
 		hAngle = -(hminute*PI)/60; // arc angle
 		matStack.translate(c[0], c[1]);
 		matStack.scale(0.8f, 0.8f); // minute hand shorter
-		matStack.rotate(-hAngle);
+		matStack.rotate(hAngle);
 		matStack.translate(-c[0], -c[1]);
 		gl.glLineWidth(2);
 		transDrawClock(c, h);
@@ -131,7 +128,7 @@ public class J2_1_Clock2d_iking extends Frame implements GLEventListener {
 		hAngle = -(hhour*PI)/12; // arc angle
 		matStack.translate(c[0], c[1]);
 		matStack.scale(0.5f, 0.5f); // hour hand shortest
-		matStack.rotate(-hAngle);
+		matStack.rotate(hAngle);
 		matStack.translate(-c[0], -c[1]);
 		gl.glLineWidth(3);
 		transDrawClock(c, h);

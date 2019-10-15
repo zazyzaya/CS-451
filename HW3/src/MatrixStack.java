@@ -10,9 +10,11 @@ public class MatrixStack {
 	private int size;
 	private static Matrix_Lib_iking matOps;
 	
+	// Builds an array stack with identity matrix by default
 	public MatrixStack() {
 		stack = new ArrayList<float[]>();
-		size = -1;
+		stack.add(matOps.getIdentity());
+		size = 0;
 	}
 	
 	public void push(float[] m) {
@@ -53,8 +55,14 @@ public class MatrixStack {
 	
 	// Overloaded for 2d transforms
 	public void translate(float tx, float ty) { this.translate(tx, ty, 0); }
-	public void scale(float sx, float sy) { this.scale(sx, sy, 0); }
+	public void scale(float sx, float sy) { this.scale(sx, sy, 1); }
+	public void scale(float sx) { this.scale(sx, sx, 0); }
 	public void rotate(float rz) { this.rotate(0, 0, rz); }
+	
+	// Overloaded for inputting vectors as transform coords
+	public void translate(float[] t) { this.translate(t[0], t[1], t[2]); }
+	public void scale(float[] s) { this.scale(s[0], s[1], s[2]); }
+	public void rotate(float[] r) { this.rotate(r[0], r[1], r[2]); }
 	
 	
 }

@@ -5,5 +5,5 @@ uniform mat4 modelMatrix;
 
 
 void main(void) {
-	gl_Position = iPosition * modelMatrix;
+	gl_Position = modelMatrix * iPosition;
 }
