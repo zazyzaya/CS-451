@@ -1,0 +1,77 @@
+// J7_2_VP.cg Fragment Program: fragment lighting 
+
+void main(
+	float4 iColor       :   COLOR,
+	float4 iPosition	: 	TEXCOORD0, 
+	float3 iNormal    	: 	TEXCOORD1,
+	float2 iTexCoord    :   TEXCOORD2,
+	float3 tNormal      :   TEXCOORD3,
+	float3 bNormal      :   TEXCOORD4,
+out float4 oColor 		: 	COLOR, 
+uniform sampler2D imgTexture	: 	TEX0,
+uniform sampler2D normalTexture	: 	TEX0,
+uniform sampler2D lumTexture    :   TEX0,
+uniform sampler2D swapTexture    :   TEX0,
+              uniform float3 La,
+              uniform float3 Ld,
+              uniform float3 Ls,
+              uniform float3 lightPosition,
+              uniform float3 La2,
+              uniform float3 Ld2,
+              uniform float3 Ls2,
+              uniform float3 lightPosition2,
+              uniform float3 eyePosition,
+              uniform float3 Me,
+              uniform float3 Ma,
+              uniform float3 Md,
+              uniform float3 Ms,
+              uniform float3 ColorSwap,
+              uniform float  shininess,
+              uniform float Pulse
+) {   
+  float4 texSwap1 = tex2D(swapTexture, iTexCoord);
+  float4 texColor1 = tex2D(imgTexture, iTexCoord);
+  float3 texColor2 = lerp(texColor1.xyz, ColorSwap, texSwap1.x);
+  float4 texNormal1 = tex2D(normalTexture, iTexCoord);
+  float4 texLum1 = tex2D(lumTexture, iTexCoord);
+
+  float3 N = texNormal1.xzy*2 - 1; 
+  N = normalize(N);
+  float3 P = iPosition.xyz;
+   	
+  // transform light source direction to tangent space 
+  float3 Lg = normalize(lightPosition - P);
+  float3 L = float3(dot(tNormal, Lg), dot(iNormal, Lg), dot(bNormal, Lg));
+  L = normalize(L);
+
+  float3 Lg2 = normalize(lightPosition2 - P);
+  float3 L2 = float3(dot(tNormal, Lg2), dot(iNormal, Lg2), dot(bNormal, Lg2));
+  L2 = normalize(L2);
+
+  
+  //calculate emission and ambient components
+  float3 Ie = Me + Pulse*texLum1.xyz; 
+  float3 Ia = La*Ma ; 
+  
+  // calculate diffuse component
+  float cosNL = max(dot(N, L), 0); 
+  float cosNL2 = max(dot(N, L2), 0); 
+  float3 Id = Md * (Ld * cosNL + Ld2 * cosNL2);
+  
+  // calculate specular component
+  float3 Vg = normalize(eyePosition - P);
+  float3 V = float3(dot(tNormal, Vg),dot(iNormal, Vg),dot(bNormal, Vg)) ; 
+
+  float3 H = normalize(L + V);
+  float cosNH = max(dot(N, H), 0); 
+  float3 H2 = normalize(L2 + V);
+  float cosNH2 = max(dot(N, H2), 0); 
+  if (cosNL==0) cosNH = 0; 
+  if (cosNL==0) cosNH2 = 0; 
+  float3 Is = Ms * (Ls * pow(cosNH, shininess) + Ls2 * pow(cosNH2, shininess)); 
+
+  float3 It = texColor2.xyz;
+
+  oColor.xyz = Is + ((Ie + Ia + Id) * It) ;
+  //oColor.xyz=Me;
+}

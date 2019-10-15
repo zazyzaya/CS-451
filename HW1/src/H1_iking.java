@@ -20,10 +20,10 @@ public class H1_iking extends JOGL1_3_VertexArray {
 	private float theta = 0f;
 	
 	// Tweak these for nicer renderings
-	private static int 		NUM_PARTICLES = 100;
+	private static int 		NUM_PARTICLES = 1000;
 	private static float 	MAX_VELOCITY = 0.01f;
 	private static float 	ROT_SPEED = 0.01f;
-	private static float 	DUST_SIZE = 6f;
+	private static float 	DUST_SIZE = 1f;
 	private static float 	MOVER_SIZE = 20f;
 	
 	public static void main(String[] args) {

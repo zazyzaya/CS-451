@@ -1,0 +1,40 @@
+// J7_2_VP.cg Vertex Program: fragment lighting 
+
+void main(
+	float4 iPosition	: 	POSITION, 
+	float4 iNormal    	: 	NORMAL,
+	float4 iColor		:   COLOR,
+	float2 iTexCoord 	: 	TEXCOORD0,
+	float4 iTVector     :   TEXCOORD1,
+	float4 iBVector     :   TEXCOORD2,
+	
+out float4 oPosition 	: 	POSITION, 
+out float4 oColor       :   COLOR,
+out float4 vPosition 	: 	TEXCOORD0,
+out float3 vNormal      : 	TEXCOORD1,
+out float2 oTexCoord    :   TEXCOORD2,
+out float3 oTVector     :   TEXCOORD3,
+out float3 oBVector     :   TEXCOORD4,
+
+uniform float3              faceNormal,
+uniform float               explodeAmount,
+uniform float4x4 			modelView,
+uniform float4x4 			modelViewProjection,
+uniform float4x4 			inverseTranspose
+) {
+  float4 iPosition2;
+  iPosition2.w = iPosition.w;
+  iPosition2.xyz = iPosition.xyz + (faceNormal * explodeAmount);
+  vPosition = mul(modelView, iPosition2); 
+  float4 N = mul(inverseTranspose, iNormal);
+  oPosition = mul(modelViewProjection, iPosition2);
+  oColor = iColor;
+  oTexCoord = iTexCoord;
+  vNormal = N.xyz;
+  float4 Tn = mul(inverseTranspose, iTVector);
+  float4 Bn = mul(inverseTranspose, iBVector);
+  vNormal = normalize(vNormal);
+  oTVector = normalize(Tn.xyz);
+  oBVector = normalize(Bn.xyz);
+}
+

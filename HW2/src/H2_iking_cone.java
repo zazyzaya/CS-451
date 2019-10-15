@@ -38,7 +38,7 @@ public class H2_iking_cone extends JOGL1_3_VertexArray {
 	protected static float MAX_SCALE = 0.5f;
 	protected static float MIN_SCALE = 0.25f;
 	
-	protected static int INC_TIMING = 70; 	// How often to iterate
+	protected static int INC_TIMING = 100; 	// How often to iterate
 	protected static int NUM_ITERS = 10;	// When to stop adding vectors
 	protected static int RESET_AT = 12;		// When to reset the shape back to low-poly
 	protected float HEIGHT = 1f;	// How tall the shape is
