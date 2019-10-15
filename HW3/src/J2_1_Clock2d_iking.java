@@ -38,6 +38,10 @@ public class J2_1_Clock2d_iking extends Frame implements GLEventListener {
 	protected int vbo[ ] = new int[2]; // vertex buffers objects (handles) to stores position, color, normal, etc
 	protected int POSITION = 0, COLOR = 1;
 	
+	// Uniform locations
+	protected int colorPtr;
+	protected int mxPtr;
+	
 	// array of vertices and colors corresponding to the vertices
 	float vPoints[]; 
 	float vColors[]; 
@@ -90,14 +94,15 @@ public class J2_1_Clock2d_iking extends Frame implements GLEventListener {
 		curTime = curTime/60;
 		hminute = curTime%60 + hsecond/60;
 		curTime = curTime/60;
-		hhour = (curTime%12)+(hminute/60)+(hsecond/(60*60)) - 4;
+		hhour = (curTime%12)+(hminute/60)+8; // adjust for EST
+											// Daylight savings will be in effect when this is submitted
+											// so it may be an hour off? 
 
-		hAngle = -(hsecond*PI)/60; // arc angle
-		int colorLoc = gl.glGetUniformLocation(vfPrograms, "color");
+		hAngle = -(hsecond*PI)/30; // arc angle
 		
 		// Second hand
-		matStack.pushDupe();
-		gl.glProgramUniform4f(vfPrograms, colorLoc, 1f, 0f, 0f, 1f);
+		matStack.push();
+		gl.glProgramUniform4f(vfPrograms, colorPtr, 1f, 0f, 0f, 1f);
 		float[] transform = matStack.peek();
 	
 		matStack.translate(c[0], c[1]);
@@ -109,10 +114,10 @@ public class J2_1_Clock2d_iking extends Frame implements GLEventListener {
 		
 		// Minute hand
 		matStack.pop();
-		matStack.pushDupe();
-		gl.glProgramUniform4f(vfPrograms, colorLoc, 0f, 1f, 0f, 1f); // minute hand in green
+		matStack.push();
+		gl.glProgramUniform4f(vfPrograms, colorPtr, 0f, 1f, 0f, 1f); // minute hand in green
 	
-		hAngle = -(hminute*PI)/60; // arc angle
+		hAngle = -(hminute*PI)/30; // arc angle
 		matStack.translate(c[0], c[1]);
 		matStack.scale(0.8f, 0.8f); // minute hand shorter
 		matStack.rotate(hAngle);
@@ -122,10 +127,10 @@ public class J2_1_Clock2d_iking extends Frame implements GLEventListener {
 
 		// Hour hand
 		matStack.pop();
-		matStack.pushDupe();
-		gl.glProgramUniform4f(vfPrograms, colorLoc, 0f, 0f, 1f, 1f); // hour hand in blue
+		matStack.push();
+		gl.glProgramUniform4f(vfPrograms, colorPtr, 0f, 0f, 1f, 1f); // hour hand in blue
 		
-		hAngle = -(hhour*PI)/12; // arc angle
+		hAngle = -(hhour*PI)/6; // arc angle
 		matStack.translate(c[0], c[1]);
 		matStack.scale(0.5f, 0.5f); // hour hand shortest
 		matStack.rotate(hAngle);
@@ -151,7 +156,6 @@ public class J2_1_Clock2d_iking extends Frame implements GLEventListener {
 
 		// Load most recent matrix into uniform
 		float[] mmx = matStack.peek();
-		int mxPtr = gl.glGetUniformLocation(vfPrograms, "modelMatrix");
 		gl.glProgramUniformMatrix4fv(vfPrograms, mxPtr, 1, true, mmx, 0);
 
 		// Draw line
@@ -178,7 +182,10 @@ public class J2_1_Clock2d_iking extends Frame implements GLEventListener {
 				
 		// 5. enable VAO with loaded VBO data
 		gl.glEnableVertexAttribArray(0); // enable the 0th vertex attribute: position
-		//gl.glEnableVertexAttribArray(1); // enable the 1th vertex attribute: color
+		gl.glEnableVertexAttribArray(1); // enable the 1th vertex attribute: color
+		
+		colorPtr = gl.glGetUniformLocation(vfPrograms, "color");
+		mxPtr = gl.glGetUniformLocation(vfPrograms, "modelMatrix");
 	}
 
 	public static void main(String[] args) {

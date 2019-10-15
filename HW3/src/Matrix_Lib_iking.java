@@ -5,6 +5,8 @@
  *
  */
 public class Matrix_Lib_iking {
+	/* Multiplication */
+	
 	/**
 	 * Performs multiplication on two 4x4 matrices
 	 */
@@ -27,10 +29,34 @@ public class Matrix_Lib_iking {
 		return product;
 	}
 	
+	public static float[] vecMult(float[] m, float[] v) {
+		float[] product = new float[4];
+		
+		// Adjust for 2d coords
+		if (v.length == 3) {
+			v = new float[] { v[0], v[1], v[2], 1.0f };
+		}
+		
+		for (int i=0; i<4; i++) {
+			float val = 0;
+			
+			for (int j=0; j<4; j++) {
+				val += v[i] * m[j*4 + i];
+			}
+			
+			product[i] = val;
+		}
+		
+		return product;
+	}
+	
 	// For ease of typing
 	public static float[] mult(float[] m1, float[] m2) {
 		return matMult4x4(m1, m2);
 	}
+	
+	
+	/* Transformations */
 	
 	/**
 	 *  Generates a scale matrix for a given scaling factor
@@ -97,23 +123,24 @@ public class Matrix_Lib_iking {
 		return ret;
 	}
 	
+	
 	/**
 	 * Helper methods to quickly apply tranformations
 	 * 
 	 */
 	public static float[] rotate(float[] mat, float rx, float ry, float rz) {
 		float[] rotMat = getRotMatrix(rx, ry, rz);
-		return mult(rotMat, mat);
+		return mult(mat, rotMat);
 	}
 	
 	public static float[] translate(float[] mat, float tx, float ty, float tz) {
 		float[] tMat = getTransMatrix(tx, ty, tz);
-		return mult(tMat, mat);
+		return mult(mat, tMat);
 	}
 	
 	public static float[] scale(float[] mat, float sx, float sy, float sz) {
 		float[] sMat = getScaleMatrix(sx, sy, sz);
-		return mult(sMat, mat);
+		return mult(mat, sMat);
 	}
 	
 	public static float[] getIdentity() {
@@ -125,6 +152,37 @@ public class Matrix_Lib_iking {
 		};
 		
 		return ret;
+	}
+	
+	/* Projections */
+	public static float[] getOrtho(
+			float left, float right, 
+			float top, float bottom, 
+			float near, float far) {
+		
+		float[] ret = new float[] {
+				2/(right-left), 0, 0, (right+left)/(right-left),
+				0, 2/(top-bottom), 0, (top+bottom)/(top-bottom),
+				0, 0, -2/(far-near), (far+near)/(near-far),
+				0, 0, 0, 1
+		};
+		
+		return ret;
+	}
+	
+	public static float[] getFrustum(
+			float left, float right,
+			float top, float bottom,
+			float near, float far) {
+		
+		float[] ret = new float[] {
+				near, 0, 0, 0, 
+				0, near, 0, 0, 
+				0, 0, far+near, far*near,
+				0, 0, -1, 0
+		};
+		
+		return mult(getOrtho(left, right, top, bottom, near, far), ret);
 	}
 	
 }

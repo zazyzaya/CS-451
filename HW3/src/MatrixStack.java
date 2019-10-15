@@ -8,12 +8,11 @@ import java.util.ArrayList;
 public class MatrixStack {
 	private ArrayList<float[]> stack;
 	private int size;
-	private static Matrix_Lib_iking matOps;
 	
 	// Builds an array stack with identity matrix by default
 	public MatrixStack() {
 		stack = new ArrayList<float[]>();
-		stack.add(matOps.getIdentity());
+		stack.add(Matrix_Lib_iking.getIdentity());
 		size = 0;
 	}
 	
@@ -22,11 +21,12 @@ public class MatrixStack {
 		size++;
 	}
 	
-	/**
-	 * Pushes a copy of the current matrix to the top 
-	 */
-	public void pushDupe() {
+	public void push() {
 		this.push(this.peek().clone());
+	}
+	
+	public void pushIdentity() {
+		this.push(Matrix_Lib_iking.getIdentity());
 	}
 	
 	public float[] pop() {
@@ -42,15 +42,15 @@ public class MatrixStack {
 	 *
 	 */
 	public void rotate(float rx, float ry, float rz) {
-		stack.set(size, matOps.mult(this.peek(), matOps.rotate(this.peek(), rx, ry, rz)));
+		stack.set(size, Matrix_Lib_iking.rotate(this.peek(), rx, ry, rz));
 	}
 	
 	public void translate(float tx, float ty, float tz) {
-		stack.set(size, matOps.mult(this.peek(), matOps.translate(this.peek(), tx, ty, tz)));
+		stack.set(size, Matrix_Lib_iking.translate(this.peek(), tx, ty, tz));
 	}
 	
 	public void scale(float sx, float sy, float sz) {
-		stack.set(size, matOps.mult(this.peek(), matOps.scale(this.peek(), sx, sy, sz)));
+		stack.set(size, Matrix_Lib_iking.scale(this.peek(), sx, sy, sz));
 	}
 	
 	// Overloaded for 2d transforms
@@ -64,5 +64,20 @@ public class MatrixStack {
 	public void scale(float[] s) { this.scale(s[0], s[1], s[2]); }
 	public void rotate(float[] r) { this.rotate(r[0], r[1], r[2]); }
 	
+	// Projections
+	public void pushOrtho(
+			float left, float right, 
+			float top, float bottom, 
+			float near, float far) {
+		
+		this.push(Matrix_Lib_iking.getOrtho(left, right, top, bottom, near, far));
+	}
 	
+	public void pushFrustum(
+			float left, float right, 
+			float top, float bottom, 
+			float near, float far) {
+		
+		this.push(Matrix_Lib_iking.getFrustum(left, right, top, bottom, near, far));
+	}
 }
