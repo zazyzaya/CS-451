@@ -155,7 +155,7 @@ public class J2_5_Cone_iking extends J2_4_Robot_iking {
 
 	}
 
-	private float[] normalize(float[] vec) {
+	protected float[] normalize(float[] vec) {
 		float abs = (float) Math.sqrt(vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 		
 		for (int i=0; i<3; i++) {
