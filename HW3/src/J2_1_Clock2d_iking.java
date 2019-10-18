@@ -30,8 +30,8 @@ public class J2_1_Clock2d_iking extends Frame implements GLEventListener {
 	static int WIDTH = 800, HEIGHT = 800; // used to set the window size
 	FPSAnimator animator; // for thread that calls display() repetitively
 	
-	private String vShaderSourceFile = "src/clock_2d_iking_v.shader";
-	private String fShaderSourceFile = "src/clock_2d_iking_f.shader";
+	private String vShaderSourceFile = "src/uniform_colors_iking_v.shader";
+	private String fShaderSourceFile = "src/uniform_colors_iking_f.shader";
 	
 	int vfPrograms; // handle to shader programs
 	protected int vao[ ] = new int[1]; // vertex array object (handle), for sending to the vertex shader

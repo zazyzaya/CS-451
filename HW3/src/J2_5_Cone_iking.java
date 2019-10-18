@@ -18,8 +18,8 @@ public class J2_5_Cone_iking extends J2_4_Robot_iking {
 	MatrixStack projection = new MatrixStack();
 	MatrixStack modelView = new MatrixStack();
 	
-	private String vShaderSourceFile = "src/J2_5_Cone_iking_v.shader";
-	private String fShaderSourceFile = "src/J2_5_Cone_iking_f.shader";
+	private String vShaderSourceFile = "src/vbo_colors_iking_v.shader";
+	private String fShaderSourceFile = "src/vbo_colors_iking_f.shader";
 	
 	protected ArrayList<Float> vPointList = new ArrayList<Float>();
 	protected ArrayList<Float> vColorList = new ArrayList<Float>();
@@ -147,7 +147,7 @@ public class J2_5_Cone_iking extends J2_4_Robot_iking {
 			modelView.pop();
 			
 			// rotate 1 degree alone vector (1, 1, 1)
-			modelView.rotate(2*PI/360, 2*PI/360, 2*PI/360);
+			modelView.rotateAllAxes(2*PI/360);
 			modelView.push();
 			modelView.scale(cRadius, cRadius, cRadius);
 			drawCone();
@@ -207,6 +207,40 @@ public class J2_5_Cone_iking extends J2_4_Robot_iking {
 		}
 	}
 
+	/**
+	 * Loads points stored in vPoints and vColors into buffers and updates modelMatrix uniform
+	 */
+	protected void loadPoints() {
+		// Load points into buffer
+		gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[POSITION]); // use handle 0 		
+		FloatBuffer vBuf = Buffers.newDirectFloatBuffer(vPoints);
+		gl.glBufferData(GL_ARRAY_BUFFER, vBuf.limit()*Float.BYTES, vBuf, GL_STATIC_DRAW); 
+		gl.glVertexAttribPointer(POSITION, 4, GL_FLOAT, false, 0, 0); // associate vbo[0] with active VAO buffer
+		
+		// Load colors into buffer
+		gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[COLOR]); // use handle 0 		
+		FloatBuffer cBuf = Buffers.newDirectFloatBuffer(vColors);
+		gl.glBufferData(GL_ARRAY_BUFFER, cBuf.limit()*Float.BYTES, cBuf, GL_STATIC_DRAW); 
+		gl.glVertexAttribPointer(COLOR, 4, GL_FLOAT, false, 0, 0); // associate vbo[0] with active VAO buffer
+
+		// Load most recent matrix into uniform
+		float[] mmx = Matrix_Lib_iking.mult(projection.peek(), modelView.peek());
+		gl.glProgramUniformMatrix4fv(vfPrograms, mxPtr, 1, true, mmx, 0);
+	}
+	
+	/**
+	 * Loads points in vPoints and loads vPoints.size/4 copies of color into vColor
+	 * @param color
+	 */
+	protected void loadPoints(float[] color) {
+		vColors = new float[vPoints.length];
+		
+		for (int i=0; i<vColors.length; i++) {
+			vColors[i] = color[i%4];
+		}
+		
+		loadPoints();
+	}
 	
 	/*
 	 * Draws whatever is in the vPointList and vColorList, then empties those lists for later use 
@@ -220,18 +254,8 @@ public class J2_5_Cone_iking extends J2_4_Robot_iking {
 			vColors[i] = (float) vColorList.get(i);
 		}
 		
-		// Load points into buffer
-		gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[POSITION]); // use handle 0 		
-		FloatBuffer vBuf = Buffers.newDirectFloatBuffer(vPoints);
-		gl.glBufferData(GL_ARRAY_BUFFER, vBuf.limit()*Float.BYTES, vBuf, GL_STATIC_DRAW); 
-		gl.glVertexAttribPointer(POSITION, 4, GL_FLOAT, false, 0, 0); // associate vbo[0] with active VAO buffer
+		loadPoints();
 		
-		// Load colors into buffer
-		gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[COLOR]); // use handle 0 		
-		FloatBuffer cBuf = Buffers.newDirectFloatBuffer(vColors);
-		gl.glBufferData(GL_ARRAY_BUFFER, cBuf.limit()*Float.BYTES, cBuf, GL_STATIC_DRAW); 
-		gl.glVertexAttribPointer(COLOR, 4, GL_FLOAT, false, 0, 0); // associate vbo[0] with active VAO buffer
-
 		// Load most recent matrix into uniform
 		float[] mmx = Matrix_Lib_iking.mult(projection.peek(), modelView.peek());
 		gl.glProgramUniformMatrix4fv(vfPrograms, mxPtr, 1, true, mmx, 0);

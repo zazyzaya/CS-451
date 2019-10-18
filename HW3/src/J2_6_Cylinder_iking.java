@@ -21,7 +21,7 @@ public class J2_6_Cylinder_iking extends J2_5_Cone_iking {
 		gl.glClear(GL.GL_COLOR_BUFFER_BIT|
 							 GL.GL_DEPTH_BUFFER_BIT);
 
-		modelView.rotate(2*PI/360, 2*PI/360, 2*PI/360);
+		modelView.rotateAllAxes(2*PI/360);
 		// rotate 1 degree alone vector (1, 1, 1)
 		modelView.push();
 		modelView.scale(cRadius, cRadius, cRadius);
@@ -59,14 +59,6 @@ public class J2_6_Cylinder_iking extends J2_5_Cone_iking {
 			prepareToDrawTriangle(v1, v2, v22, color);
 			prepareToDrawTriangle(v22, v11, v1, color);
 			
-			/*
-			gl.glBegin(GL.GL_POLYGON);
-			gl.glVertex3fv(v1,0);
-			gl.glVertex3fv(v2,0);
-			gl.glVertex3fv(v22,0);
-			gl.glVertex3fv(v11,0);
-			gl.glEnd();
-			*/
 
 			return;
 		}

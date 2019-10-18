@@ -41,7 +41,7 @@ public class Matrix_Lib_iking {
 			float val = 0;
 			
 			for (int j=0; j<4; j++) {
-				val += v[i] * m[j*4 + i];
+				val += m[j+4*i] * v[j];
 			}
 			
 			product[i] = val;
@@ -69,39 +69,59 @@ public class Matrix_Lib_iking {
 				0f, 0f, 0f, 1f
 		};
 	}
+	
 	/**
-	 * Builds a rotation matrix given 3 angles in 3D space, then multiplies them together
-	 * to get a 4x4 matrix used for transforms in the vert shader
+	 * Clone of glRotate
+	 * Note: Undefined when !(isX ^ isY ^ isZ)
 	 * 
-	 * @param thetaX
-	 * @param thetaY
-	 * @param thetaZ
+	 * @param theta angle to rotate by 
+	 * @param isX set to 1.0 for Xrot
+	 * @param isY set to 1.0 for Yrot
+	 * @param isZ set to 1.0 for Zrot
 	 * @return
 	 */
-	public static float[] getRotMatrix(float thetaX, float thetaY, float thetaZ){
+	public static float[] getRotMatrix(float theta, float isX, float isY, float isZ){
+		float[] ret = null;
+		
 		// Row major rot matrix
-		float[] xrot = {
+		if (isX == 1.0) {
+			float[] xrot = {
 				1f, 0f, 0f, 0f,
-				0f, (float) Math.cos(thetaX), (float) -Math.sin(thetaX), 0f,
-				0f, (float) Math.sin(thetaX), (float) Math.cos(thetaX), 0f,
+				0f, (float) Math.cos(theta), (float) -Math.sin(theta), 0f,
+				0f, (float) Math.sin(theta), (float) Math.cos(theta), 0f,
 				0f, 0f, 0f, 1f
-		};
+			};
+			
+			ret = xrot;
+		}
 		
-		float[] yrot = {
-				(float) Math.cos(thetaY), 0f, (float) -Math.sin(thetaY), 0f,
-				0f, 1f, 0f, 0f, 
-				(float) Math.sin(thetaY), 0f, (float) Math.cos(thetaY), 0f,
-				0f, 0f, 0f, 1f
-		};
+		else if (isY == 1.0) {
+			float[] yrot = {
+					(float) Math.cos(theta), 0f, (float) -Math.sin(theta), 0f,
+					0f, 1f, 0f, 0f, 
+					(float) Math.sin(theta), 0f, (float) Math.cos(theta), 0f,
+					0f, 0f, 0f, 1f
+			};
+			
+			ret = yrot;
+		}
 		
-		float[] zrot = {
-				(float) Math.cos(thetaZ), (float) -Math.sin(thetaZ), 0f, 0f,
-				(float) Math.sin(thetaZ), (float) Math.cos(thetaZ), 0f, 0f,
+		else if (isZ == 1.0) {
+			float[] zrot = {
+				(float) Math.cos(theta), (float) -Math.sin(theta), 0f, 0f,
+				(float) Math.sin(theta), (float) Math.cos(theta), 0f, 0f,
 				0f, 0f, 1f, 0f,
 				0f, 0f, 0f, 1f
-		};
+			};
+			
+			ret = zrot;
+		}
 		
-		return matMult4x4(matMult4x4(xrot, yrot), zrot);
+		if (isX != 1.0 && isY != 1.0 && isZ != 1.0){
+			throw new IllegalArgumentException("Please provide 1 angle, and set exactly 1 argument to 1.0");
+		}
+		
+		return ret;
 	}
 	
 	/**
@@ -128,8 +148,8 @@ public class Matrix_Lib_iking {
 	 * Helper methods to quickly apply tranformations
 	 * 
 	 */
-	public static float[] rotate(float[] mat, float rx, float ry, float rz) {
-		float[] rotMat = getRotMatrix(rx, ry, rz);
+	public static float[] rotate(float[] mat, float angle, float rx, float ry, float rz) {
+		float[] rotMat = getRotMatrix(angle, rx, ry, rz);
 		return mult(mat, rotMat);
 	}
 	
@@ -157,13 +177,13 @@ public class Matrix_Lib_iking {
 	/* Projections */
 	public static float[] getOrtho(
 			float left, float right, 
-			float top, float bottom, 
+			float bottom, float top, 
 			float near, float far) {
 		
 		float[] ret = new float[] {
-				2/(right-left), 0, 0, (right+left)/(right-left),
-				0, 2/(top-bottom), 0, (top+bottom)/(top-bottom),
-				0, 0, -2/(far-near), (far+near)/(near-far),
+				2/(right-left), 0, 0, -(right+left)/(right-left),
+				0, 2/(top-bottom), 0, -(top+bottom)/(top-bottom),
+				0, 0, -2/(far-near), -(far+near)/(far-near),
 				0, 0, 0, 1
 		};
 		
@@ -172,17 +192,32 @@ public class Matrix_Lib_iking {
 	
 	public static float[] getFrustum(
 			float left, float right,
-			float top, float bottom,
+			float bottom, float top,
 			float near, float far) {
 		
+		// OpenGl specs say near is always supposed to be positive
+		// But it only really matters for the x and y vectors that near
+		// is always positive, and if it's negative, we don't need to negate
+		// C and D
+		float n = Math.abs(near);
+		float neg = -1.0f;
+		if (near < 0) {
+			neg = 1.0f;
+		}
+		
+		float 	A=(right+left)/(right-left), 
+				B=(top+bottom)/(top-bottom),
+				C=(far+near)/(far-near),
+				D=(2*far*near)/(far-near);
+				
 		float[] ret = new float[] {
-				near, 0, 0, 0, 
-				0, near, 0, 0, 
-				0, 0, far+near, far*near,
-				0, 0, -1, 0
+				(2*n)/(right-left), 0, A, 0, 
+				0, (2*n)/(top-bottom), B, 0, 
+				0, 0, C*neg, D*neg,
+				0, 0, -1f, 0
 		};
 		
-		return mult(getOrtho(left, right, top, bottom, near, far), ret);
+		return ret;
 	}
 	
 }
