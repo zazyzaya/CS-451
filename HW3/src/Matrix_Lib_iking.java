@@ -29,6 +29,11 @@ public class Matrix_Lib_iking {
 		return product;
 	}
 	
+	// For ease of typing
+	public static float[] mult(float[] m1, float[] m2) {
+		return matMult4x4(m1, m2);
+	}
+	
 	public static float[] vecMult(float[] m, float[] v) {
 		float[] product = new float[4];
 		
@@ -48,11 +53,6 @@ public class Matrix_Lib_iking {
 		}
 		
 		return product;
-	}
-	
-	// For ease of typing
-	public static float[] mult(float[] m1, float[] m2) {
-		return matMult4x4(m1, m2);
 	}
 	
 	

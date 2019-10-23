@@ -18,6 +18,10 @@ public class J2_5_Cone_iking extends J2_4_Robot_iking {
 	MatrixStack projection = new MatrixStack();
 	MatrixStack modelView = new MatrixStack();
 	
+	protected int mmxPtr;
+	protected int pmxPtr;	// Pointer for projection matrix which is sent to GLSL seperately so 
+							// lighting equations can run
+	
 	private String vShaderSourceFile = "src/vbo_colors_iking_v.shader";
 	private String fShaderSourceFile = "src/vbo_colors_iking_f.shader";
 	
@@ -223,9 +227,14 @@ public class J2_5_Cone_iking extends J2_4_Robot_iking {
 		gl.glBufferData(GL_ARRAY_BUFFER, cBuf.limit()*Float.BYTES, cBuf, GL_STATIC_DRAW); 
 		gl.glVertexAttribPointer(COLOR, 4, GL_FLOAT, false, 0, 0); // associate vbo[0] with active VAO buffer
 
-		// Load most recent matrix into uniform
-		float[] mmx = Matrix_Lib_iking.mult(projection.peek(), modelView.peek());
-		gl.glProgramUniformMatrix4fv(vfPrograms, mxPtr, 1, true, mmx, 0);
+		// Load most recent matrices into uniform
+		float[] mmx = modelView.peek();
+		float[] pmx = projection.peek();
+		
+		// Comment out below line when get shader working
+		//mmx = Matrix_Lib_iking.mult(pmx, mmx);
+		gl.glProgramUniformMatrix4fv(vfPrograms, mmxPtr, 1, true, mmx, 0);
+		gl.glProgramUniformMatrix4fv(vfPrograms, pmxPtr, 1, true, pmx, 0);
 	}
 	
 	/**
@@ -255,10 +264,6 @@ public class J2_5_Cone_iking extends J2_4_Robot_iking {
 		}
 		
 		loadPoints();
-		
-		// Load most recent matrix into uniform
-		float[] mmx = Matrix_Lib_iking.mult(projection.peek(), modelView.peek());
-		gl.glProgramUniformMatrix4fv(vfPrograms, mxPtr, 1, true, mmx, 0);
 		
 		// Draw vectors
 		gl.glDrawArrays(GL_TRIANGLES, 0, vPoints.length / 4);
@@ -317,7 +322,8 @@ public class J2_5_Cone_iking extends J2_4_Robot_iking {
 		gl.glEnableVertexAttribArray(0); // enable the 0th vertex attribute: position
 		gl.glEnableVertexAttribArray(1); // enable the 1th vertex attribute: color
 		
-		//colorPtr = gl.glGetUniformLocation(vfPrograms, "color");
-		mxPtr = gl.glGetUniformLocation(vfPrograms, "modelMatrix");
+		// 6. Get locations of matrix ptrs
+		mmxPtr = gl.glGetUniformLocation(vfPrograms, "modelview_mx");
+		pmxPtr = gl.glGetUniformLocation(vfPrograms, "projection_mx");
 	}
 }
