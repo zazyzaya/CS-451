@@ -18,9 +18,14 @@ public class J2_5_Cone_iking extends J2_4_Robot_iking {
 	MatrixStack projection = new MatrixStack();
 	MatrixStack modelView = new MatrixStack();
 	
+	// Add another entry to VBO to hold normals for lighting calculations
+	protected int vbo[ ] = new int[2];
+	protected int NORMALS = 2;
+	protected float[] vNorms;
+	
 	protected int mmxPtr;
 	protected int pmxPtr;	// Pointer for projection matrix which is sent to GLSL seperately so 
-							// lighting equations can run
+	protected int nmxPtr; 	// lighting equations can run
 	
 	private String vShaderSourceFile = "src/vbo_colors_iking_v.shader";
 	private String fShaderSourceFile = "src/vbo_colors_iking_f.shader";
@@ -170,6 +175,38 @@ public class J2_5_Cone_iking extends J2_4_Robot_iking {
 			vColorList.add(1.0f);
 		}
 	}
+	
+	/**
+	 * Populates the vNorms array with normals generated from values in the vPoints array.
+	 * Uses algorithm described here: https://www.khronos.org/opengl/wiki/Calculating_a_Surface_Normal
+	 */
+	protected void generateVectorNorms() {
+		vNorms = new float[vPoints.length];
+		
+		for (int i=0; i<vPoints.length; i += 3*4) {
+			float p1[]=new float[4], p2[]=new float[4], p3[]=new float[4];
+			float norm[] = new float[4];
+			
+			for (int j=0; j<4; j++) {
+				p1[j] = vPoints[i+j];
+				p2[j] = vPoints[i+4+j];
+				p3[j] = vPoints[i+8+j];
+			}
+			
+			float u[] = {p2[0]-p1[0], p2[1]-p1[1], p2[2]-p1[2]};
+			float v[] = {p3[0]-p1[0], p3[1]-p1[1], p3[2]-p1[2]};
+			
+			norm[0] = u[1]*v[2] - u[2]*v[2];
+			norm[1] = u[2]*v[0] - u[0]*v[2];
+			norm[2] = u[0]*v[1] - u[1]*v[0];
+			norm[3] = 1f;
+			
+			for (int j=0; j<12; j++) {
+				vNorms[i+j] = norm[j%4];
+			}
+		}
+	}
+	
 
 	/**
 	 * Loads points stored in vPoints and vColors into buffers and updates modelMatrix uniform
@@ -182,10 +219,17 @@ public class J2_5_Cone_iking extends J2_4_Robot_iking {
 		gl.glVertexAttribPointer(POSITION, 4, GL_FLOAT, false, 0, 0); // associate vbo[0] with active VAO buffer
 		
 		// Load colors into buffer
-		gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[COLOR]); // use handle 0 		
+		gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[COLOR]); // use handle 1 		
 		FloatBuffer cBuf = Buffers.newDirectFloatBuffer(vColors);
 		gl.glBufferData(GL_ARRAY_BUFFER, cBuf.limit()*Float.BYTES, cBuf, GL_STATIC_DRAW); 
 		gl.glVertexAttribPointer(COLOR, 4, GL_FLOAT, false, 0, 0); // associate vbo[0] with active VAO buffer
+		
+		// Load normals into buffer
+		generateVectorNorms();
+		gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[NORMAL]); // use handle 2 		
+		FloatBuffer nBuf = Buffers.newDirectFloatBuffer(vNorms);
+		gl.glBufferData(GL_ARRAY_BUFFER, nBuf.limit()*Float.BYTES, nBuf, GL_STATIC_DRAW); 
+		gl.glVertexAttribPointer(NORMALS, 4, GL_FLOAT, false, 0, 0); // associate vbo[0] with active VAO buffer
 
 		// Load most recent matrices into uniform
 		float[] mmx = modelView.peek();
@@ -278,8 +322,9 @@ public class J2_5_Cone_iking extends J2_4_Robot_iking {
 		System.out.println(vbo.length); // we use two: position and color
 				
 		// 5. enable VAO with loaded VBO data
-		gl.glEnableVertexAttribArray(0); // enable the 0th vertex attribute: position
-		gl.glEnableVertexAttribArray(1); // enable the 1th vertex attribute: color
+		gl.glEnableVertexAttribArray(POSITION); // enable the 0th vertex attribute: position
+		gl.glEnableVertexAttribArray(COLOR); 	// enable the 1th vertex attribute: color
+		gl.glEnableVertexAttribArray(NORMALS);	// enable the 2nd vertex attribute: normal vector
 		
 		// 6. Get locations of matrix ptrs
 		mmxPtr = gl.glGetUniformLocation(vfPrograms, "modelview_mx");
