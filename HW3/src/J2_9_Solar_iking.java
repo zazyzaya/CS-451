@@ -47,8 +47,10 @@ public class J2_9_Solar_iking extends J2_8_Robot3d_iking {
 		vColors = coordColors;
 		
 		// Draw
-		loadPoints();
+		loadPointsNoNorms();
+		gl.glProgramUniform1i(vfPrograms, isShadingPtr, 0);
 		gl.glDrawArrays(GL_LINES, 0, vPoints.length / 4);
+		gl.glProgramUniform1i(vfPrograms, isShadingPtr, 1);
 	}
 
 
