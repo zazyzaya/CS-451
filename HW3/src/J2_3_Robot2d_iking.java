@@ -42,39 +42,7 @@ public class J2_3_Robot2d_iking extends J2_1_Clock2d_iking {
 		transDrawArm(gama, -alpha, -beta);
 	}
 
-	// Method I: 2D robot arm transformations
-	/*
-	  public void transDrawArm1(float a, float b, float g) {
-	    float Af[] = new float[3];
-	    float B1[] = new float[3];
-	    float C1[] = new float[3];
-	    float Bf[] = new float[3];
-	    float C2[] = new float[3];
-	    float Cf[] = new float[3];
-
-	    my2dLoadIdentity();
-	    my2dRotatef(a);
-	    my2dTransHomoVertex(A, Af);
-	    my2dTransHomoVertex(B, B1);
-	    my2dTransHomoVertex(C, C1);
-
-	    drawArm(O, Af);
-
-	    my2dLoadIdentity();
-	    my2dTranslatef(Af[0], Af[1]);
-	    my2dRotatef(b);
-	    my2dTranslatef(-Af[0], -Af[1]);
-	    my2dTransHomoVertex(B1, Bf);
-	    my2dTransHomoVertex(C1, C2);
-	    drawArm(Af, Bf);
-
-	    my2dLoadIdentity();
-	    my2dTranslatef(Bf[0], Bf[1]);
-	    my2dRotatef(g);
-	    my2dTranslatef(-Bf[0], -Bf[1]);
-	    my2dTransHomoVertex(C2, Cf);
-	    drawArm(Bf, Cf);
-	  } */
+	
 
 	// Method II: 2D robot arm transformations
 	public void transDrawArm(float a, float b, float g) {
@@ -96,49 +64,6 @@ public class J2_3_Robot2d_iking extends J2_1_Clock2d_iking {
 		
 		matStack.pop();
 	}
-
-	// Method III: 2D robot arm transformations
-	/*
-	public void transDrawArm3(float a, float b, float g) {
-		float Af[] = new float[3];
-		float Bf[] = new float[3];
-		float Cf[] = new float[3];
-
-		my2dLoadIdentity();
-		my2dRotatef(a);
-		my2dTransHomoVertex(A, Af);
-		drawArm(O, Af);
-		
-		my2dLoadIdentity();
-		my2dTranslatef(Af[0], Af[1]);
-		my2dRotatef(a+b);
-		my2dTranslatef(-A[0], -A[1]);
-		my2dTransHomoVertex(B, Bf);
-		drawArm(Af, Bf);
-		
-		my2dLoadIdentity();
-		my2dTranslatef(Bf[0], Bf[1]);
-		my2dRotatef(a+b+g);
-		my2dTranslatef(-B[0], -B[1]);
-		my2dTransHomoVertex(C, Cf);
-		drawArm(Bf, Cf);
-	}
-
-
-	// trasform the coordinates and then draw
-	private void transDrawArm(float C[], float H[]) {
-
-		float End1[] = new float[3];
-		float End2[] = new float[3];
-
-		my2dTransHomoVertex(C, End1);
-		// multiply the point with the matrix on the stack
-		my2dTransHomoVertex(H, End2);
-
-		// assuming z = w = 1;
-		drawArm(End1, End2);
-	}
-	*/
 
 	// draw the coordinates directly
 	public void drawArm(float C[], float H[]) {

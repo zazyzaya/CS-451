@@ -8,17 +8,17 @@ public class J2_11_ConeSolar_iking extends J2_10_GenSolar_iking {
 
 		// Global coordinates
 		gl.glLineWidth(5);
-		//coordOff = false; // cjx
 		drawColorCoord(WIDTH/4, WIDTH/4, WIDTH/4);
-		//coordOff = true; // cjx
 		modelView.push();
-		modelView.rotateDegrees(e, 0.0f, 1.0f, 0.0f);
+		
 		// rotating around the "sun"; proceed angle
+		modelView.rotateDegrees(e, 0.0f, 1.0f, 0.0f);
 		modelView.rotateDegrees(tiltAngle, 0.0f, 0.0f, 1.0f); // tilt angle
 		modelView.translate(0.0f, E, 0.0f);
 		modelView.push();
 		modelView.scale(WIDTH/20, WIDTH/20, WIDTH/20);
 		drawSphere();
+		
 		modelView.pop();
 		modelView.push();
 		modelView.scale(E/8, E, E/8);
@@ -26,8 +26,8 @@ public class J2_11_ConeSolar_iking extends J2_10_GenSolar_iking {
 		drawCone();
 		modelView.pop();
 
-		modelView.rotateDegrees(m, 0.0f, 1.0f, 0.0f);
 		// rotating around the "earth"
+		modelView.rotateDegrees(m, 0.0f, 1.0f, 0.0f);
 		modelView.translate(M, 0.0f, 0.0f);
 		gl.glLineWidth(3);
 		drawColorCoord(WIDTH/8, WIDTH/8, WIDTH/8);

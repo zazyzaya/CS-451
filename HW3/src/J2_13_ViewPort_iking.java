@@ -13,7 +13,6 @@ J2_12_RobotSolar_iking {
 
 	  cnt++; 
 	  
-	  
 	  if ((cnt % 1000) < 200) 
 		  gl.glViewport(0, 0, WIDTH, HEIGHT);
 	  else if ((cnt % 1000) < 400)

@@ -38,7 +38,6 @@ public class J2_10_GenSolar_iking extends J2_9_Solar_iking {
 		gl.glDrawArrays(GL_LINES, 0, vPoints.length / 4);
 		
 		modelView.translate(0.0f, earthDistance, 0.0f);
-		// cjx gl.glLineWidth(3);
 		modelView.push();
 		drawColorCoord(WIDTH/6, WIDTH/6, WIDTH/6);
 		modelView.scale(WIDTH/20, WIDTH/20, WIDTH/20);

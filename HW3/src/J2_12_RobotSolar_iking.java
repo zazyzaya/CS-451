@@ -78,7 +78,6 @@ public class J2_12_RobotSolar_iking extends
 		modelView.rotateDegrees(beta, 0, 0, 1);
 		// R_z(alpha)T_x(A)R_z(beta) is on top of the stack
 		drawArm(A, B);
-//		drawSolar(WIDTH/4, 2.5f*cnt, WIDTH/6, 1.5f*cnt);
 
 		modelView.translate(B-A, 0, 0);
 		modelView.rotateDegrees(gama, 0, 0, 1);

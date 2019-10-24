@@ -57,10 +57,6 @@ public class J2_15_LookAt_iking extends J2_14_Perspective_iking {
     projection.pop();
     projection.pushOrtho(-w/2, w/2, -h/2, h/2, -w, w);
     projection.scale(1/2f);
-	
-	//gl.glRasterPos3f(-w/3, -h/3, 0); // start poistion
-    //glut.glutBitmapString(GLUT.BITMAP_HELVETICA_18,
-    //                      "Viewport1 - looking down -z.");
 
   }
 
@@ -74,12 +70,8 @@ public class J2_15_LookAt_iking extends J2_14_Perspective_iking {
     projection.pushFrustum(-w/8, w/8, -h/8, h/8, w/2, 4*w);
     projection.translate(0, 0, -2*w);
 
-    //gl.glRasterPos3f(-w/3, -h/3, 0); // start poistion
-    //glut.glutBitmapString(GLUT.BITMAP_HELVETICA_18,
-    //                     "Viewport2 - earth to origin.");
-
     // earthC retrieved in drawSolar() before viewPort2
-    glu.gluLookAt(5*earthC[0], 5*earthC[1], 5*earthC[2], // TODO make myLookAt work
+    glu.gluLookAt(5*earthC[0], 5*earthC[1], 5*earthC[2], 
              0, 0, 0, 0, 1, 0);
   }
 
@@ -93,10 +85,6 @@ public class J2_15_LookAt_iking extends J2_14_Perspective_iking {
     // make sure the cone is within the viewing volume
     projection.pushFrustum(-w/8, w/8, -h/8, h/8, w/2, 4*w);
     projection.translate(0, 0, -2*w);
-    
-    //gl.glRasterPos3f(-w/3, -h/3, 0); // start poistion
-    //glut.glutBitmapString(GLUT.BITMAP_HELVETICA_18,
-    //                     "Viewport3 - cylinder to earth.");
 
     // earthC retrieved in drawSolar() before viewPort3
     mygluLookAt(cylinderC[0], cylinderC[1], cylinderC[2],
@@ -118,65 +106,6 @@ public class J2_15_LookAt_iking extends J2_14_Perspective_iking {
     // this is the default look
     glu.gluLookAt(0, 0, 0, 0, 0, -1, 0, 1, 0);
     projection.translate(0, 0, -2*w);
-
-    //gl.glRasterPos3f(-w/2.5f, -h/2.1f, 0);
-    // glut.glutBitmapString(GLUT.BITMAP_HELVETICA_18,
-    //                      "Viewport4 - a different scene.");
-  }
-
-
-  public void myLookAt(
-      double eX, double eY, double eZ,
-      double cX, double cY, double cZ,
-      double upX, double upY, double upZ) {
-    //eye and center are points, but up is a vector
-
-    //1. change center into a vector:
-    // glTranslated(-eX, -eY, -eZ);
-    cX = cX-eX;
-    cY = cY-eY;
-    cZ = cZ-eZ;
-
-    //2. The angle of center on xz plane and x axis
-    // i.e. angle to rot so center in the neg. yz plane
-    double a = Math.atan(cZ/cX);
-    if (cX>=0) {
-      a = a+Math.PI/2;
-    } else {
-      a = a-Math.PI/2;
-    }
-
-    //3. The angle between the center and y axis
-    // i.e. angle to rot so center in the negative z axis
-    double b = Math.acos(
-        cY/Math.sqrt(cX*cX+cY*cY+cZ*cZ));
-    b = b-Math.PI/2;
-
-    //4. up rotate around y axis (a) radians
-    double upx = upX*Math.cos(a)+upZ*Math.sin(a);
-    double upz = -upX*Math.sin(a)+upZ*Math.cos(a);
-    upX = upx;
-    upZ = upz;
-
-    //5. up rotate around x axis (b) radians
-    double upy = upY*Math.cos(b)-upZ*Math.sin(b);
-    upz = upY*Math.sin(b)+upZ*Math.cos(b);
-    upY = upy;
-    upZ = upz;
-
-    double c = Math.atan(upX/upY);
-    if (upY<0) {
-      //6. the angle between up on xy plane and y axis
-      c = c+Math.PI;
-    }
-    projection.rotateDegrees((float)Math.toDegrees(c), 0, 0, 1f);
-    // up in yz plane
-    projection.rotateDegrees((float)Math.toDegrees(b), 1f, 0, 0);
-    // center in negative z axis
-    projection.rotateDegrees((float)Math.toDegrees(a), 0, 1f, 0);
-    //center in yz plane
-    projection.translate((float)-eX, (float)-eY, (float)-eZ);
-    //eye at the origin
   }
 
 

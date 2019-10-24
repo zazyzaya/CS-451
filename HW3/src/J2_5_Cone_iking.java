@@ -79,29 +79,10 @@ public class J2_5_Cone_iking extends J2_4_Robot_iking {
 			//4. GL_DEPTH_TEST for hidden-surface removal
 			if (cnt % 800 < 400)	{
 				gl.glEnable(GL.GL_DEPTH_TEST);
-				//gl.glProgramUniform4f(vfPrograms, colorPtr, 1.0f, 1.0f, 1.0f, 1.0f);
-				//gl.glWindowPos2d(10, 20);
-				/*
-				tr.begin3DRendering();
-				tr.setColor(1.0f, 1.0f, 1.0f, 1.0f);
-				tr.draw3D("DEPTH_TEST Enabled", 0f, 0f, 0f, 1.0f);
-				tr.end3DRendering();
-				*/
-				
-				//glut.glutBitmapString(GLUT.BITMAP_HELVETICA_18, "DEPTH_TEST Enabled");
 			}
 			
 			else	{
 				gl.glDisable(GL.GL_DEPTH_TEST);
-				//gl.glProgramUniform4f(vfPrograms, colorPtr, 1.0f, 0, 0, 1.0f);
-				//gl.glWindowPos2d(10, 20); 
-				//glut.glutBitmapString(GLUT.BITMAP_HELVETICA_18, "DEPTH_TEST Disabled");
-				/*
-				tr.begin3DRendering();
-				tr.setColor(1.0f, 0, 0, 1.0f);
-				tr.draw3D("DEPTH_TEST Disabled", 0f, 0f, 0f, 1.0f);
-				tr.end3DRendering();
-				*/
 		 }
 			
 	 
@@ -113,28 +94,10 @@ public class J2_5_Cone_iking extends J2_4_Robot_iking {
 			if (cnt % 500 > 370) {
 				gl.glEnable(GL.GL_CULL_FACE); 
 				gl.glCullFace(GL.GL_FRONT); 
-				//gl.glProgramUniform4f(vfPrograms, colorPtr, 1.0f, 0, 1.0f, 1.0f);
-				//glut.glutBitmapString(GLUT.BITMAP_HELVETICA_18, 
-	 			//	"		gl.glCullFace(GL.GL_FRONT);");
-				/*
-				tr.begin3DRendering();
-				tr.setColor(1.0f, 0, 1.0f, 1.0f);
-				tr.draw3D("		gl.glCullFace(GL.GL_FRONT);", 0f, 0f, 0f, 1.0f);
-				tr.end3DRendering();
-				*/
 			}
 			else if (cnt % 500 > 245) {
 				gl.glEnable(GL.GL_CULL_FACE); 
 				gl.glCullFace(GL.GL_BACK); 
-				//gl.glProgramUniform4f(vfPrograms, colorPtr, 1.0f, 1.0f, 0, 1.0f);
-				//glut.glutBitmapString(GLUT.BITMAP_HELVETICA_18, 
-	 			//"		gl.glCullFace(GL.GL_BACK);");
-				/*
-				tr.begin3DRendering();
-				tr.setColor(1.0f, 1.0f, 0, 1.0f);
-				tr.draw3D("		gl.glCullFace(GL.GL_BACK);", 0f, 0f, 0f, 1.0f);
-				tr.end3DRendering();
-				*/
 			}
 			else {
 				gl.glDisable(GL.GL_CULL_FACE); 
@@ -175,9 +138,6 @@ public class J2_5_Cone_iking extends J2_4_Robot_iking {
 
 		if (depth==0) {
 			float[] color = {v1[0]*v1[0], v1[1]*v1[1], 0, 1.0f};
-
-			//drawtriangle(v2, v1, v0);
-			// bottom cover of the cone
 
 			v0[2] = 1; // height of the cone, the tip on z axis
 			prepareToDrawTriangle(v1, v2, v0, color); // side cover of the cone
@@ -232,7 +192,6 @@ public class J2_5_Cone_iking extends J2_4_Robot_iking {
 		float[] pmx = projection.peek();
 		
 		// Comment out below line when get shader working
-		//mmx = Matrix_Lib_iking.mult(pmx, mmx);
 		gl.glProgramUniformMatrix4fv(vfPrograms, mmxPtr, 1, true, mmx, 0);
 		gl.glProgramUniformMatrix4fv(vfPrograms, pmxPtr, 1, true, pmx, 0);
 	}

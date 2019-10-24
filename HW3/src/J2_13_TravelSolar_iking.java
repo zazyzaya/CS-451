@@ -11,14 +11,10 @@ public class J2_13_TravelSolar_iking extends J2_12_RobotSolar_iking {
   public void display(GLAutoDrawable glDrawable) {
 
     cnt++;
- //   System.out.println(cnt); 
- //   cnt = 220; // for color plates 
-
     depth = (cnt/80)%7;
     gl.glClear(GL.GL_COLOR_BUFFER_BIT|
                GL.GL_DEPTH_BUFFER_BIT);
 
- //*
     if (cnt%60==0) {
       dalpha = -dalpha;
       dbeta = -dbeta;
@@ -27,8 +23,7 @@ public class J2_13_TravelSolar_iking extends J2_12_RobotSolar_iking {
 
      alpha += dalpha;
      beta += dbeta;
-     gama += dgama;
-//*/  
+     gama += dgama;  
       
 
     modelView.push();
