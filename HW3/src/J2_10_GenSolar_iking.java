@@ -34,7 +34,7 @@ public class J2_10_GenSolar_iking extends J2_9_Solar_iking {
 		};
 		
 		// glColor wasn't specified, so just using white
-		loadPoints(new float[] {1f, 1f, 1f, 1f} );
+		loadPointsNoNorms(new float[] {1f, 1f, 1f, 1f} );
 		gl.glDrawArrays(GL_LINES, 0, vPoints.length / 4);
 		
 		modelView.translate(0.0f, earthDistance, 0.0f);

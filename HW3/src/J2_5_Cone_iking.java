@@ -17,10 +17,22 @@ import java.util.ArrayList;
 public class J2_5_Cone_iking extends J2_4_Robot_iking {
 	MatrixStack projection = new MatrixStack();
 	MatrixStack modelView = new MatrixStack();
+	MatrixStack cameraView = new MatrixStack();
+	
+	// Position of diffuse light
+	protected float[] LIGHT_POS = {-0.25f, -0.5f, -1f, 0f};
+	
+	// Add another entry to VBO to hold normals for lighting calculations
+	protected int vbo[ ] = new int[3];
+	protected int NORMALS = 2;
+	protected float[] vNorms;
 	
 	protected int mmxPtr;
 	protected int pmxPtr;	// Pointer for projection matrix which is sent to GLSL seperately so 
-							// lighting equations can run
+	protected int nmxPtr; 	// lighting equations can run
+	protected int cvPtr;
+	protected int isShadingPtr;
+	protected int lightPosPtr;
 	
 	private String vShaderSourceFile = "src/vbo_colors_iking_v.shader";
 	private String fShaderSourceFile = "src/vbo_colors_iking_f.shader";
@@ -51,10 +63,13 @@ public class J2_5_Cone_iking extends J2_4_Robot_iking {
 
 		WIDTH = w;
 		HEIGHT = h;
-
+		
 		//1. make sure the cone is within the viewing volume
 		projection.pop();
 		projection.pushOrtho(-w/2, w/2, -h/2, h/2, -w, w); // look at z near and far
+		
+		cameraView.pop();
+		cameraView.pushOrtho(-w/2, w/2, -h/2, h/2, -w, w); // look at z near and far
 
 		
 		//2. This will enable depth test in general
@@ -105,8 +120,8 @@ public class J2_5_Cone_iking extends J2_4_Robot_iking {
 			
 			//6. draw a triangle for showing hidden surface removal
 			float 	v0[] = {-WIDTH/4, -WIDTH/4, -WIDTH}, 
-					v1[] = {WIDTH/4, 0, WIDTH}, 
-					v2[] = {WIDTH/4, HEIGHT/3, 0}; 
+					v2[] = {WIDTH/4, 0, WIDTH}, 
+					v1[] = {WIDTH/4, HEIGHT/3, 0}; 
 			
 			modelView.pushIdentity();
 			float[] color = { 0.5f, 0.5f, 0.5f };
@@ -139,6 +154,9 @@ public class J2_5_Cone_iking extends J2_4_Robot_iking {
 		if (depth==0) {
 			float[] color = {v1[0]*v1[0], v1[1]*v1[1], 0, 1.0f};
 
+			prepareToDrawTriangle(v1, v2, v0, color);
+		    // bottom cover of the cone
+			
 			v0[2] = 1; // height of the cone, the tip on z axis
 			prepareToDrawTriangle(v1, v2, v0, color); // side cover of the cone
 
@@ -170,6 +188,37 @@ public class J2_5_Cone_iking extends J2_4_Robot_iking {
 			vColorList.add(1.0f);
 		}
 	}
+	
+	/**
+	 * Populates the vNorms array with normals generated from values in the vPoints array.
+	 * Uses algorithm described here: https://www.khronos.org/opengl/wiki/Calculating_a_Surface_Normal
+	 */
+	protected void generateVectorNorms() {
+		vNorms = new float[vPoints.length];
+		
+		for (int i=0; i<vPoints.length; i += 3*4) {
+			float p1[]=new float[3], p2[]=new float[3], p3[]=new float[3];
+			float norm[] = new float[4];
+			
+			for (int j=0; j<3; j++) {
+				p1[j] = vPoints[i+j];
+				p2[j] = vPoints[i+4+j];
+				p3[j] = vPoints[i+8+j];
+			}
+			
+			float v[] = {p2[0]-p1[0], p2[1]-p1[1], p2[2]-p1[2]};
+			float u[] = {p3[0]-p1[0], p3[1]-p1[1], p3[2]-p1[2]};
+
+			norm[0] = u[1]*v[2] - u[2]*v[1];
+			norm[1] = u[2]*v[0] - u[0]*v[2];
+			norm[2] = u[0]*v[1] - u[1]*v[0];
+			norm[3] = 0f;
+			
+			for (int j=0; j<12; j++) {
+				vNorms[i+j] = norm[j%4];
+			}
+		}
+	}
 
 	/**
 	 * Loads points stored in vPoints and vColors into buffers and updates modelMatrix uniform
@@ -182,16 +231,57 @@ public class J2_5_Cone_iking extends J2_4_Robot_iking {
 		gl.glVertexAttribPointer(POSITION, 4, GL_FLOAT, false, 0, 0); // associate vbo[0] with active VAO buffer
 		
 		// Load colors into buffer
-		gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[COLOR]); // use handle 0 		
+		gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[COLOR]); // use handle 1 		
 		FloatBuffer cBuf = Buffers.newDirectFloatBuffer(vColors);
 		gl.glBufferData(GL_ARRAY_BUFFER, cBuf.limit()*Float.BYTES, cBuf, GL_STATIC_DRAW); 
 		gl.glVertexAttribPointer(COLOR, 4, GL_FLOAT, false, 0, 0); // associate vbo[0] with active VAO buffer
-
+	
+		// Load normals into buffer
+		generateVectorNorms();
+		gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[NORMALS]); // use handle 2 		
+		FloatBuffer nBuf = Buffers.newDirectFloatBuffer(vNorms);
+		gl.glBufferData(GL_ARRAY_BUFFER, nBuf.limit()*Float.BYTES, nBuf, GL_STATIC_DRAW); 
+		gl.glVertexAttribPointer(NORMALS, 4, GL_FLOAT, false, 0, 0); // associate vbo[0] with active VAO buffer
+		
+		// Load most recent matrices into uniform
+		float[] mmx = modelView.peek();
+		float[] pmx = projection.peek();
+		float[] cmx = cameraView.peek();
+		//float[] mv_lightPos = Matrix_Lib_iking.vecMult(Matrix_Lib_iking.getScaleFactor(mmx), LIGHT_POS);
+		 
+		gl.glProgramUniformMatrix4fv(vfPrograms, mmxPtr, 1, true, mmx, 0);
+		gl.glProgramUniformMatrix4fv(vfPrograms, pmxPtr, 1, true, pmx, 0);
+		gl.glProgramUniformMatrix4fv(vfPrograms, cvPtr, 1, true, cmx, 0);
+		gl.glProgramUniform4fv(vfPrograms, lightPosPtr, 1, LIGHT_POS, 0);
+	}
+	
+	/**
+	 * Loads points that do not require vector norms. Used for drawing lines
+	 */
+	protected void loadPointsNoNorms() {
+		// Load points into buffer
+		gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[POSITION]); // use handle 0 		
+		FloatBuffer vBuf = Buffers.newDirectFloatBuffer(vPoints);
+		gl.glBufferData(GL_ARRAY_BUFFER, vBuf.limit()*Float.BYTES, vBuf, GL_STATIC_DRAW); 
+		gl.glVertexAttribPointer(POSITION, 4, GL_FLOAT, false, 0, 0); // associate vbo[0] with active VAO buffer
+		
+		// Load colors into buffer
+		gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[COLOR]); // use handle 1 		
+		FloatBuffer cBuf = Buffers.newDirectFloatBuffer(vColors);
+		gl.glBufferData(GL_ARRAY_BUFFER, cBuf.limit()*Float.BYTES, cBuf, GL_STATIC_DRAW); 
+		gl.glVertexAttribPointer(COLOR, 4, GL_FLOAT, false, 0, 0); // associate vbo[0] with active VAO buffer
+		
+		// Load normals into buffer
+		vNorms = new float[vPoints.length];	// Assign memory that's never read so it isn't null
+		gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[NORMALS]); // use handle 2 		
+		FloatBuffer nBuf = Buffers.newDirectFloatBuffer(vNorms);
+		gl.glBufferData(GL_ARRAY_BUFFER, nBuf.limit()*Float.BYTES, nBuf, GL_STATIC_DRAW); 
+		gl.glVertexAttribPointer(NORMALS, 4, GL_FLOAT, false, 0, 0); // associate vbo[0] with active VAO buffer
+		
 		// Load most recent matrices into uniform
 		float[] mmx = modelView.peek();
 		float[] pmx = projection.peek();
 		
-		// Comment out below line when get shader working
 		gl.glProgramUniformMatrix4fv(vfPrograms, mmxPtr, 1, true, mmx, 0);
 		gl.glProgramUniformMatrix4fv(vfPrograms, pmxPtr, 1, true, pmx, 0);
 	}
@@ -208,6 +298,16 @@ public class J2_5_Cone_iking extends J2_4_Robot_iking {
 		}
 		
 		loadPoints();
+	}
+	
+	protected void loadPointsNoNorms(float[] color) {
+		vColors = new float[vPoints.length];
+		
+		for (int i=0; i<vColors.length; i++) {
+			vColors[i] = color[i%4];
+		}	
+		
+		loadPointsNoNorms();
 	}
 	
 	/*
@@ -278,11 +378,19 @@ public class J2_5_Cone_iking extends J2_4_Robot_iking {
 		System.out.println(vbo.length); // we use two: position and color
 				
 		// 5. enable VAO with loaded VBO data
-		gl.glEnableVertexAttribArray(0); // enable the 0th vertex attribute: position
-		gl.glEnableVertexAttribArray(1); // enable the 1th vertex attribute: color
+		gl.glEnableVertexAttribArray(POSITION); // enable the 0th vertex attribute: position
+		gl.glEnableVertexAttribArray(COLOR); 	// enable the 1th vertex attribute: color
+		gl.glEnableVertexAttribArray(NORMALS);	// enable the 2nd vertex attribute: normal vector
 		
 		// 6. Get locations of matrix ptrs
 		mmxPtr = gl.glGetUniformLocation(vfPrograms, "modelview_mx");
+		cvPtr = gl.glGetUniformLocation(vfPrograms, "cameraview_mx");
 		pmxPtr = gl.glGetUniformLocation(vfPrograms, "projection_mx");
+		
+		lightPosPtr = gl.glGetUniformLocation(vfPrograms, "light_pos");
+		isShadingPtr = gl.glGetUniformLocation(vfPrograms, "isShaded");
+		
+		gl.glProgramUniform1i(vfPrograms, isShadingPtr, 1);
+		gl.glProgramUniform4fv(vfPrograms, lightPosPtr, 1, LIGHT_POS, 0);
 	}
 }

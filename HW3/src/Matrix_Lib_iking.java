@@ -220,4 +220,18 @@ public class Matrix_Lib_iking {
 		return ret;
 	}
 	
+	/**
+	 * Returns only the scaling factor from a matrix. Used to move light into viewspace 
+	 * @param mx
+	 * @return
+	 */
+	public static float[] getScaleFactor(float[] mx) {
+		float sx, sy, sz;
+		sx = (float) Math.sqrt(mx[0]*mx[0] + mx[4]*mx[4] + mx[8]*mx[8]);
+		sy = (float) Math.sqrt(mx[1]*mx[1] + mx[5]*mx[5] + mx[9]*mx[9]);
+		sz = (float) Math.sqrt(mx[3]*mx[3] + mx[6]*mx[6] + mx[10]*mx[10]);
+		
+		return Matrix_Lib_iking.getScaleMatrix(sx, sy, sz);
+	}
+	
 }
