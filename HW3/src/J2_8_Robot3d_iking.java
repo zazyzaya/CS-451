@@ -24,7 +24,6 @@ public class J2_8_Robot3d_iking extends J2_7_Sphere_iking {
 	float B = (float)0.55*WIDTH;
 	float C = (float)0.7*WIDTH;
 
-
 	public void display(GLAutoDrawable glDrawable) {
 		depth = (cnt/100)%7;
 		cnt++;

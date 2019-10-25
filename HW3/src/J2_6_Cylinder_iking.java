@@ -47,7 +47,7 @@ public class J2_6_Cylinder_iking extends J2_5_Cone_iking {
 				v11[i] = v1[i];
 			}
 
-			prepareToDrawTriangle(v2, v1, v0, color);
+			prepareToDrawTriangle(v1, v2, v0, color);
 			// draw sphere at the cylinder's bottom
 
 			v11[2] = v22[2] = v0[2] = 1.0f;

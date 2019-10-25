@@ -23,6 +23,9 @@ public class J2_14_Perspective_iking extends
 
     projection.pop();
     projection.pushFrustum((float)left, (float)right, (float)bottom, (float)top, (float)near, (float)far);
+    
+    cameraView.pop();
+	cameraView.pushOrtho((float)left, (float)right, (float)bottom, (float)top, (float)near, (float)far); // look at z near and far
   }
 
 
